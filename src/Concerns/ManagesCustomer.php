@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas\Concerns;
+namespace Fevinta\CashierAsaas\Concerns;
 
-use FernandoHS\CashierAsaas\Asaas;
-use FernandoHS\CashierAsaas\Exceptions\CustomerAlreadyCreated;
-use FernandoHS\CashierAsaas\Exceptions\InvalidCustomer;
+use Fevinta\CashierAsaas\Asaas;
+use Fevinta\CashierAsaas\Exceptions\CustomerAlreadyCreated;
+use Fevinta\CashierAsaas\Exceptions\InvalidCustomer;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait ManagesCustomer

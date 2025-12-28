@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas\Api;
+namespace Fevinta\CashierAsaas\Api;
 
-use FernandoHS\CashierAsaas\Asaas;
-use FernandoHS\CashierAsaas\Exceptions\AsaasApiException;
+use Fevinta\CashierAsaas\Asaas;
+use Fevinta\CashierAsaas\Exceptions\AsaasApiException;
 
 class PaymentApi
 {

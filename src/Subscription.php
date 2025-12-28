@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas;
+namespace Fevinta\CashierAsaas;
 
 use Carbon\Carbon;
-use FernandoHS\CashierAsaas\Enums\BillingType;
-use FernandoHS\CashierAsaas\Enums\SubscriptionCycle;
-use FernandoHS\CashierAsaas\Enums\SubscriptionStatus;
+use Fevinta\CashierAsaas\Enums\BillingType;
+use Fevinta\CashierAsaas\Enums\SubscriptionCycle;
+use Fevinta\CashierAsaas\Enums\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +20,7 @@ class Subscription extends Model
     protected $table = 'asaas_subscriptions';
 
     protected $fillable = [
+        'user_id',
         'type',
         'asaas_id',
         'asaas_status',
@@ -344,7 +345,7 @@ class Subscription extends Model
     /**
      * Scope to get active subscriptions.
      */
-    public function scopeActive($query)
+    public function scopeWhereActive($query)
     {
         return $query->where('asaas_status', SubscriptionStatus::ACTIVE->value);
     }

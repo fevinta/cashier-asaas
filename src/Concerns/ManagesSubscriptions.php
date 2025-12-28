@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas\Concerns;
+namespace Fevinta\CashierAsaas\Concerns;
 
 use Carbon\Carbon;
-use FernandoHS\CashierAsaas\Subscription;
-use FernandoHS\CashierAsaas\SubscriptionBuilder;
+use Fevinta\CashierAsaas\Subscription;
+use Fevinta\CashierAsaas\SubscriptionBuilder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait ManagesSubscriptions

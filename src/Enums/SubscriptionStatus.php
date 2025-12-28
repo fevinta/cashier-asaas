@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas\Enums;
+namespace Fevinta\CashierAsaas\Enums;
 
 enum SubscriptionStatus: string
 {

@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas;
+namespace Fevinta\CashierAsaas;
 
+use Fevinta\CashierAsaas\Http\Middleware\VerifyWebhookSignature;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -19,7 +20,7 @@ class CashierAsaasServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/../config/cashier-asaas.php',
+            __DIR__.'/../config/cashier-asaas.php',
             'cashier-asaas'
         );
     }
@@ -27,7 +28,7 @@ class CashierAsaasServiceProvider extends ServiceProvider
     protected function registerMigrations(): void
     {
         if ($this->app->runningInConsole()) {
-            $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+            $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         }
     }
 
@@ -35,11 +36,11 @@ class CashierAsaasServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../config/cashier-asaas.php' => config_path('cashier-asaas.php'),
+                __DIR__.'/../config/cashier-asaas.php' => config_path('cashier-asaas.php'),
             ], 'cashier-asaas-config');
 
             $this->publishes([
-                __DIR__ . '/../database/migrations' => database_path('migrations'),
+                __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'cashier-asaas-migrations');
         }
     }
@@ -50,6 +51,7 @@ class CashierAsaasServiceProvider extends ServiceProvider
             Route::group([
                 'prefix' => config('cashier-asaas.webhook_path', 'asaas/webhook'),
                 'as' => 'cashier.',
+                'middleware' => [VerifyWebhookSignature::class],
             ], function () {
                 Route::post('/', [Http\Controllers\WebhookController::class, 'handleWebhook'])
                     ->name('webhook');

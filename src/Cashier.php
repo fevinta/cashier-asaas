@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas;
+namespace Fevinta\CashierAsaas;
 
 use Money\Currencies\ISOCurrencies;
 use Money\Currency;
@@ -16,6 +16,20 @@ class Cashier
      * Indicates if Cashier routes will be registered.
      */
     public static bool $registersRoutes = true;
+
+    /**
+     * The subscription model class name.
+     *
+     * @var class-string<Subscription>
+     */
+    public static string $subscriptionModel = Subscription::class;
+
+    /**
+     * The payment model class name.
+     *
+     * @var class-string<Payment>
+     */
+    public static string $paymentModel = Payment::class;
 
     /**
      * The custom currency formatter.
@@ -56,7 +70,7 @@ class Cashier
         $locale = config('cashier-asaas.currency_locale', 'pt_BR');
 
         $money = new Money((int) ($amount * 100), new Currency($currency));
-        
+
         $numberFormatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
         $moneyFormatter = new IntlMoneyFormatter($numberFormatter, new ISOCurrencies());
 
@@ -73,17 +87,41 @@ class Cashier
 
     /**
      * Use a custom model for subscriptions.
+     *
+     * @param  class-string<Subscription>  $model
      */
     public static function useSubscriptionModel(string $model): void
     {
-        app()->bind(Subscription::class, $model);
+        static::$subscriptionModel = $model;
     }
 
     /**
      * Use a custom model for payments.
+     *
+     * @param  class-string<Payment>  $model
      */
     public static function usePaymentModel(string $model): void
     {
-        app()->bind(Payment::class, $model);
+        static::$paymentModel = $model;
+    }
+
+    /**
+     * Get the subscription model class name.
+     *
+     * @return class-string<Subscription>
+     */
+    public static function subscriptionModel(): string
+    {
+        return static::$subscriptionModel;
+    }
+
+    /**
+     * Get the payment model class name.
+     *
+     * @return class-string<Payment>
+     */
+    public static function paymentModel(): string
+    {
+        return static::$paymentModel;
     }
 }

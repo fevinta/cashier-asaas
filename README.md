@@ -1,4 +1,4 @@
-# Laravel Cashier Asaas
+# Laravel Cashier-style Asaas (Unofficial)
 
 Laravel Cashier-style subscription billing for [Asaas](https://www.asaas.com) payment gateway (Brazil).
 
@@ -14,7 +14,7 @@ Laravel Cashier-style subscription billing for [Asaas](https://www.asaas.com) pa
 ## Installation
 
 ```bash
-composer require fernandohs/cashier-asaas
+composer require fevinta/cashier-asaas
 ```
 
 Publish the configuration and migrations:
@@ -59,7 +59,7 @@ Define your subscription plans in `config/cashier-asaas.php`:
 Add the `Billable` trait to your User model:
 
 ```php
-use FernandoHS\CashierAsaas\Billable;
+use Fevinta\CashierAsaas\Billable;
 
 class User extends Authenticatable
 {
@@ -192,7 +192,7 @@ $subscription->updateCreditCardToken($newToken);
 ### Single Charges
 
 ```php
-use FernandoHS\CashierAsaas\Enums\BillingType;
+use Fevinta\CashierAsaas\Enums\BillingType;
 
 // Charge with PIX
 $payment = $user->charge(100.00, BillingType::PIX, [
@@ -232,13 +232,13 @@ Available events you can listen to:
 ```php
 // In EventServiceProvider
 protected $listen = [
-    \FernandoHS\CashierAsaas\Events\PaymentReceived::class => [
+    \Fevinta\CashierAsaas\Events\PaymentReceived::class => [
         \App\Listeners\HandlePaymentReceived::class,
     ],
-    \FernandoHS\CashierAsaas\Events\PaymentOverdue::class => [
+    \Fevinta\CashierAsaas\Events\PaymentOverdue::class => [
         \App\Listeners\HandlePaymentOverdue::class,
     ],
-    \FernandoHS\CashierAsaas\Events\PaymentRefunded::class => [
+    \Fevinta\CashierAsaas\Events\PaymentRefunded::class => [
         \App\Listeners\HandlePaymentRefunded::class,
     ],
 ];
@@ -258,7 +258,7 @@ Register the middleware in your Kernel:
 
 ```php
 protected $middlewareAliases = [
-    'subscribed' => \FernandoHS\CashierAsaas\Http\Middleware\EnsureUserIsSubscribed::class,
+    'subscribed' => \Fevinta\CashierAsaas\Http\Middleware\EnsureUserIsSubscribed::class,
 ];
 ```
 
@@ -304,9 +304,62 @@ $user->newSubscription('default', 'pro')
 
 ## Testing
 
+The package uses PEST for testing with a dual approach: mocked HTTP for fast unit/feature tests, and real Asaas Sandbox API for integration tests.
+
+### Run All Tests (Mocked)
+
 ```bash
+# Using composer script
 composer test
+
+# Or directly with PEST
+./vendor/bin/pest
+
+# With coverage report
+./vendor/bin/pest --coverage
 ```
+
+### Run Specific Test Suites
+
+```bash
+# Unit tests only
+./vendor/bin/pest --testsuite=Unit
+
+# Feature tests only
+./vendor/bin/pest --testsuite=Feature
+
+# Integration tests (requires Asaas credentials)
+./vendor/bin/pest --testsuite=Integration
+```
+
+### Integration Tests (Real Asaas Sandbox)
+
+Integration tests hit the real Asaas Sandbox API. They are skipped by default when no credentials are configured.
+
+```bash
+# Set your Asaas Sandbox API key
+export ASAAS_API_KEY=your_sandbox_api_key
+
+# Run integration tests
+./vendor/bin/pest --testsuite=Integration
+```
+
+### Static Analysis
+
+```bash
+# Run PHPStan
+./vendor/bin/phpstan analyse
+```
+
+### Test Configuration
+
+Environment variables for testing:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ASAAS_API_KEY` | Asaas API key (required for integration tests) | - |
+| `ASAAS_SANDBOX` | Enable sandbox mode | `true` |
+| `ASAAS_WEBHOOK_TOKEN` | Webhook verification token | - |
 
 ## License
 

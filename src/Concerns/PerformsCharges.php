@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas\Concerns;
+namespace Fevinta\CashierAsaas\Concerns;
 
 use Carbon\Carbon;
-use FernandoHS\CashierAsaas\Asaas;
-use FernandoHS\CashierAsaas\Enums\BillingType;
-use FernandoHS\CashierAsaas\Payment;
+use Fevinta\CashierAsaas\Asaas;
+use Fevinta\CashierAsaas\Enums\BillingType;
+use Fevinta\CashierAsaas\Payment;
 
 trait PerformsCharges
 {

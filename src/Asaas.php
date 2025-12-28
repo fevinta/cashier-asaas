@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas;
+namespace Fevinta\CashierAsaas;
 
-use FernandoHS\CashierAsaas\Api\CustomerApi;
-use FernandoHS\CashierAsaas\Api\PaymentApi;
-use FernandoHS\CashierAsaas\Api\SubscriptionApi;
-use FernandoHS\CashierAsaas\Api\WebhookApi;
+use Fevinta\CashierAsaas\Api\CustomerApi;
+use Fevinta\CashierAsaas\Api\PaymentApi;
+use Fevinta\CashierAsaas\Api\SubscriptionApi;
+use Fevinta\CashierAsaas\Api\WebhookApi;
 use Illuminate\Support\Facades\Http;
 
 class Asaas

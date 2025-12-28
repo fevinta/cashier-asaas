@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas\Exceptions;
+namespace Fevinta\CashierAsaas\Exceptions;
 
 use Exception;
 use Illuminate\Http\Client\Response;

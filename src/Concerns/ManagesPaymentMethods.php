@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas\Concerns;
+namespace Fevinta\CashierAsaas\Concerns;
 
-use FernandoHS\CashierAsaas\Asaas;
+use Fevinta\CashierAsaas\Asaas;
 
 trait ManagesPaymentMethods
 {

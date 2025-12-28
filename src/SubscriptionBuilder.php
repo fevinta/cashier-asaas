@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas;
+namespace Fevinta\CashierAsaas;
 
 use Carbon\Carbon;
-use FernandoHS\CashierAsaas\Enums\BillingType;
-use FernandoHS\CashierAsaas\Enums\SubscriptionCycle;
+use Fevinta\CashierAsaas\Enums\BillingType;
+use Fevinta\CashierAsaas\Enums\SubscriptionCycle;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace FernandoHS\CashierAsaas;
+namespace Fevinta\CashierAsaas;
 
 use Carbon\Carbon;
-use FernandoHS\CashierAsaas\Enums\BillingType;
+use Fevinta\CashierAsaas\Enums\BillingType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

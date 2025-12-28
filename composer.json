@@ -1,12 +1,12 @@
 {
-    "name": "fernandohs/cashier-asaas",
+    "name": "fevinta/cashier-asaas",
     "description": "Laravel Cashier integration for Asaas payment gateway (Brazil)",
     "keywords": ["laravel", "cashier", "asaas", "payment", "subscription", "brazil", "pix", "boleto"],
     "license": "MIT",
     "authors": [
         {
-            "name": "Fernando Henrique Silva",
-            "email": "fernando@example.com"
+            "name": "Fernando Vintacourt",
+            "email": "vintacourtfernando@gmail.com"
         }
     ],
     "require": {
@@ -25,18 +25,18 @@
     },
     "autoload": {
         "psr-4": {
-            "FernandoHS\\CashierAsaas\\": "src/"
+            "Fevinta\\CashierAsaas\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "FernandoHS\\CashierAsaas\\Tests\\": "tests/"
+            "Fevinta\\CashierAsaas\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "FernandoHS\\CashierAsaas\\CashierAsaasServiceProvider"
+                "Fevinta\\CashierAsaas\\CashierAsaasServiceProvider"
             ]
         }
     },
