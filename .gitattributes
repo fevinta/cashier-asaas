@@ -1,2 +1,12 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Export-ignore (excluded from packagist downloads)
+/.github            export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/phpstan.neon       export-ignore
+/phpunit.xml        export-ignore
+/tests              export-ignore
+/CHANGELOG.md       export-ignore
+/.editorconfig      export-ignore

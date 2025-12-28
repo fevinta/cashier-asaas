@@ -1,3 +1,40 @@
-.idea
-vendor
-.claude
+# Dependencies
+/vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.phpstorm.meta.php
+_ide_helper*.php
+
+# Claude Code
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+.phpunit.cache/
+.phpunit.result.cache
+coverage/
+.coverage
+
+# Build artifacts
+build/
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# PHPStan
+phpstan.neon.dist

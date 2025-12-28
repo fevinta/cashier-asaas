@@ -381,7 +381,7 @@ Integration tests hit the real Asaas Sandbox API. They are skipped by default wh
 
 ```bash
 # Set your Asaas Sandbox API key
-export ASAAS_API_KEY=$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmOTZjMWZhLTI1MTQtNGIyYS1hMDg3LWUwYmRlOWVmMjIwYzo6JGFhY2hfZDg5ZTU5MTctZWFmNi00MmQ1LTg2NGQtYTEyZGI2OGZmNDNl
+export ASAAS_API_KEY=your_sandbox_api_key_here
 
 # Run integration tests
 ./vendor/bin/pest --testsuite=Integration

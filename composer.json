@@ -9,6 +9,11 @@
             "email": "vintacourtfernando@gmail.com"
         }
     ],
+    "homepage": "https://github.com/fevinta/cashier-asaas",
+    "support": {
+        "issues": "https://github.com/fevinta/cashier-asaas/issues",
+        "source": "https://github.com/fevinta/cashier-asaas"
+    },
     "require": {
         "php": "^8.2",
         "illuminate/contracts": "^11.0|^12.0",
@@ -33,6 +38,12 @@
         "psr-4": {
             "Fevinta\\CashierAsaas\\Tests\\": "tests/"
         }
+    },
+    "scripts": {
+        "test": "pest",
+        "test-coverage": "pest --coverage",
+        "lint": "pint",
+        "lint-check": "pint --test"
     },
     "extra": {
         "laravel": {
