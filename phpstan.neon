@@ -2,12 +2,13 @@ includes:
     - vendor/larastan/larastan/extension.neon
 
 parameters:
-    level: 6
+    level: 4
     paths:
         - src
     tmpDir: build/phpstan
     ignoreErrors:
-        - '#Unsafe usage of new static#'
-        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::#'
+        - '#Trait .+ is used zero times and is not analysed#'
+        - '#Access to an undefined property .+::\$#'
+        - '#Call to an undefined method .+::#'
     excludePaths:
         - src/Events

@@ -23,11 +23,13 @@
         "illuminate/support": "^11.0|^12.0"
     },
     "require-dev": {
+        "larastan/larastan": "^3.8",
         "laravel/pint": "^1.0",
         "moneyphp/money": "^4.8",
         "orchestra/testbench": "^9.0|^10.0",
         "pestphp/pest": "^3.0",
-        "pestphp/pest-plugin-laravel": "^3.0"
+        "pestphp/pest-plugin-laravel": "^3.0",
+        "phpstan/phpstan": "^2.1"
     },
     "autoload": {
         "psr-4": {
@@ -40,8 +42,10 @@
         }
     },
     "scripts": {
-        "test": "pest",
-        "test-coverage": "pest --coverage",
+        "test": "pest --testsuite=Unit --testsuite=Feature",
+        "test-all": "pest",
+        "test-coverage": "pest --testsuite=Unit --testsuite=Feature --coverage",
+        "analyse": "phpstan analyse",
         "lint": "pint",
         "lint-check": "pint --test"
     },

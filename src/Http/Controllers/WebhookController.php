@@ -404,7 +404,7 @@ class WebhookController extends Controller
             BoletoGenerated::dispatch(
                 $payment,
                 $payload,
-                $paymentData['bankSlipUrl'] ?? null,
+                $paymentData['bankSlipUrl'],
                 $paymentData['identificationField'] ?? null
             );
         }
