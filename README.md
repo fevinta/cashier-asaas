@@ -1,5 +1,10 @@
 # Laravel Cashier-style Asaas (Unofficial)
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/fevinta/cashier-asaas.svg)](https://packagist.org/packages/fevinta/cashier-asaas)
+[![Tests](https://github.com/fevinta/cashier-asaas/actions/workflows/tests.yml/badge.svg)](https://github.com/fevinta/cashier-asaas/actions)
+[![Total Downloads](https://img.shields.io/packagist/dt/fevinta/cashier-asaas.svg)](https://packagist.org/packages/fevinta/cashier-asaas)
+[![License](https://img.shields.io/packagist/l/fevinta/cashier-asaas.svg)](LICENSE)
+
 Laravel Cashier-style subscription billing for [Asaas](https://www.asaas.com) payment gateway (Brazil).
 
 ## Features
