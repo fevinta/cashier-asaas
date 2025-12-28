@@ -114,7 +114,8 @@ test('formatAmount with custom formatter receives amount and currency', function
 
     Cashier::formatCurrencyUsing(function ($amount, $currency) use (&$capturedArgs) {
         $capturedArgs = ['amount' => $amount, 'currency' => $currency];
-        return "formatted";
+
+        return 'formatted';
     });
 
     Cashier::formatAmount(150.75, 'EUR');

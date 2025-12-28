@@ -22,7 +22,7 @@ class AsaasApiException extends Exception
     {
         $body = $response->json();
         $errors = $body['errors'] ?? [];
-        
+
         $message = 'Asaas API Error';
         $asaasCode = null;
 

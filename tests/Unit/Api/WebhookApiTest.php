@@ -21,7 +21,7 @@ test('list returns webhooks successfully', function () {
         ], 200),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $result = $api->list();
 
     expect($result['data'])->toHaveCount(1);
@@ -35,7 +35,7 @@ test('list throws exception on failure', function () {
         ], 401),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $api->list();
 })->throws(AsaasApiException::class);
 
@@ -48,7 +48,7 @@ test('create creates webhook successfully', function () {
         ], 200),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $result = $api->create([
         'url' => 'https://example.com/webhook',
         'email' => 'test@example.com',
@@ -66,7 +66,7 @@ test('create throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $api->create(['url' => 'invalid']);
 })->throws(AsaasApiException::class);
 
@@ -79,7 +79,7 @@ test('find returns webhook by id', function () {
         ], 200),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $result = $api->find('wh_123');
 
     expect($result['id'])->toBe('wh_123');
@@ -92,7 +92,7 @@ test('find throws exception when webhook not found', function () {
         ], 404),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $api->find('wh_nonexistent');
 })->throws(AsaasApiException::class);
 
@@ -105,7 +105,7 @@ test('update updates webhook successfully', function () {
         ], 200),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $result = $api->update('wh_123', [
         'url' => 'https://example.com/webhook-updated',
         'enabled' => false,
@@ -122,7 +122,7 @@ test('update throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $api->update('wh_123', ['url' => 'invalid']);
 })->throws(AsaasApiException::class);
 
@@ -133,7 +133,7 @@ test('delete deletes webhook successfully', function () {
         ], 200),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $result = $api->delete('wh_123');
 
     expect($result)->toBeTrue();
@@ -146,7 +146,7 @@ test('delete throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $api->delete('wh_123');
 })->throws(AsaasApiException::class);
 
@@ -161,7 +161,7 @@ test('queue returns webhook queue', function () {
         ], 200),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $result = $api->queue('wh_123');
 
     expect($result['data'])->toHaveCount(2);
@@ -175,7 +175,7 @@ test('queue throws exception on failure', function () {
         ], 404),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $api->queue('wh_123');
 })->throws(AsaasApiException::class);
 
@@ -186,7 +186,7 @@ test('resend resends webhook events successfully', function () {
         ], 200),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $result = $api->resend('wh_123');
 
     expect($result)->toBeTrue();
@@ -199,6 +199,6 @@ test('resend throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new WebhookApi();
+    $api = new WebhookApi;
     $api->resend('wh_123');
 })->throws(AsaasApiException::class);

@@ -15,8 +15,8 @@ use Fevinta\CashierAsaas\Exceptions\WebhookFailed;
 use Fevinta\CashierAsaas\Payment;
 use Fevinta\CashierAsaas\Subscription;
 use Fevinta\CashierAsaas\Tests\Fixtures\User;
-use Illuminate\Http\Client\Response;
 use GuzzleHttp\Psr7\Response as Psr7Response;
+use Illuminate\Http\Client\Response;
 
 beforeEach(function () {
     $this->user = User::create([
@@ -186,7 +186,7 @@ test('PaymentFailure failed without reason', function () {
 
     expect($exception)->toBeInstanceOf(PaymentFailure::class);
     expect($exception->reason)->toBeNull();
-    expect($exception->getMessage())->toBe("Payment [pay_test456] failed.");
+    expect($exception->getMessage())->toBe('Payment [pay_test456] failed.');
 });
 
 // SubscriptionUpdateFailure Tests
@@ -284,7 +284,7 @@ test('SubscriptionUpdateFailure failed without reason', function () {
     $exception = SubscriptionUpdateFailure::failed($subscription);
 
     expect($exception)->toBeInstanceOf(SubscriptionUpdateFailure::class);
-    expect($exception->getMessage())->toBe("Subscription [sub_test000] update failed.");
+    expect($exception->getMessage())->toBe('Subscription [sub_test000] update failed.');
 });
 
 // InvalidSubscription Tests

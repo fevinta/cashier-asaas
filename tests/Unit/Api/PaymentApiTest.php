@@ -23,7 +23,7 @@ test('create creates payment successfully', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->create([
         'customer' => 'cus_123',
         'billingType' => 'PIX',
@@ -42,7 +42,7 @@ test('create throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->create(['customer' => 'invalid']);
 })->throws(AsaasApiException::class);
 
@@ -56,7 +56,7 @@ test('find returns payment by id', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->find('pay_123');
 
     expect($result['id'])->toBe('pay_123');
@@ -70,7 +70,7 @@ test('find throws exception when payment not found', function () {
         ], 404),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->find('pay_nonexistent');
 })->throws(AsaasApiException::class);
 
@@ -83,7 +83,7 @@ test('update updates payment successfully', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->update('pay_123', [
         'value' => 150.00,
         'description' => 'Updated description',
@@ -99,7 +99,7 @@ test('update throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->update('pay_123', ['value' => 100]);
 })->throws(AsaasApiException::class);
 
@@ -110,7 +110,7 @@ test('delete deletes payment successfully', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->delete('pay_123');
 
     expect($result)->toBeTrue();
@@ -123,7 +123,7 @@ test('delete throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->delete('pay_123');
 })->throws(AsaasApiException::class);
 
@@ -141,7 +141,7 @@ test('list returns payments with pagination', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->list();
 
     expect($result['data'])->toHaveCount(2);
@@ -155,7 +155,7 @@ test('list throws exception on failure', function () {
         ], 401),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->list();
 })->throws(AsaasApiException::class);
 
@@ -168,7 +168,7 @@ test('refund refunds payment successfully', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->refund('pay_123');
 
     expect($result['status'])->toBe('REFUNDED');
@@ -183,7 +183,7 @@ test('refund with partial amount works correctly', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->refund('pay_123', ['value' => 50.00]);
 
     expect($result['refundedValue'])->toBe(50);
@@ -196,7 +196,7 @@ test('refund throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->refund('pay_123');
 })->throws(AsaasApiException::class);
 
@@ -208,7 +208,7 @@ test('status returns payment status', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->status('pay_123');
 
     expect($result)->toBe('CONFIRMED');
@@ -222,7 +222,7 @@ test('identificationField returns boleto identification field', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->identificationField('pay_123');
 
     expect($result['identificationField'])->toBeString();
@@ -236,7 +236,7 @@ test('identificationField throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->identificationField('pay_123');
 })->throws(AsaasApiException::class);
 
@@ -249,7 +249,7 @@ test('pixQrCode returns PIX QR code data', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->pixQrCode('pay_123');
 
     expect($result['encodedImage'])->toContain('base64');
@@ -263,7 +263,7 @@ test('pixQrCode throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->pixQrCode('pay_123');
 })->throws(AsaasApiException::class);
 
@@ -276,7 +276,7 @@ test('receiveInCash confirms payment received in cash', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->receiveInCash('pay_123');
 
     expect($result['status'])->toBe('RECEIVED_IN_CASH');
@@ -291,7 +291,7 @@ test('receiveInCash with payment date works correctly', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->receiveInCash('pay_123', ['paymentDate' => '2024-12-10']);
 
     expect($result['paymentDate'])->toBe('2024-12-10');
@@ -304,7 +304,7 @@ test('receiveInCash throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->receiveInCash('pay_123');
 })->throws(AsaasApiException::class);
 
@@ -317,7 +317,7 @@ test('tokenize tokenizes credit card', function () {
         ], 200),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $result = $api->tokenize([
         'customer' => 'cus_123',
         'creditCard' => [
@@ -345,6 +345,6 @@ test('tokenize throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new PaymentApi();
+    $api = new PaymentApi;
     $api->tokenize(['creditCard' => ['number' => 'invalid']]);
 })->throws(AsaasApiException::class);

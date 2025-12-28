@@ -158,7 +158,7 @@ class AsaasApiFixtures
     /**
      * Generate a list response with pagination.
      */
-    public static function list(array $data, int $totalCount = null): array
+    public static function list(array $data, ?int $totalCount = null): array
     {
         return [
             'data' => $data,

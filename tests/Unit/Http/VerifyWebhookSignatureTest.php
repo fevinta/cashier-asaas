@@ -12,7 +12,7 @@ test('middleware passes when no token is configured in non-production', function
     App::partialMock()->shouldReceive('environment')->with('production')->andReturn(false);
 
     $request = Request::create('/webhook', 'POST');
-    $middleware = new VerifyWebhookSignature();
+    $middleware = new VerifyWebhookSignature;
 
     $response = $middleware->handle($request, function ($req) {
         return response('OK');
@@ -31,7 +31,7 @@ test('middleware logs warning when no token configured in production', function 
     );
 
     $request = Request::create('/webhook', 'POST');
-    $middleware = new VerifyWebhookSignature();
+    $middleware = new VerifyWebhookSignature;
 
     $response = $middleware->handle($request, function ($req) {
         return response('OK');
@@ -46,7 +46,7 @@ test('middleware returns 403 when token header is missing', function () {
     Log::shouldReceive('warning')->once()->with('Cashier Asaas: Webhook received without access token header.');
 
     $request = Request::create('/webhook', 'POST');
-    $middleware = new VerifyWebhookSignature();
+    $middleware = new VerifyWebhookSignature;
 
     $response = $middleware->handle($request, function ($req) {
         return response('OK');
@@ -67,7 +67,7 @@ test('middleware returns 403 when token is invalid', function () {
     $request = Request::create('/webhook', 'POST');
     $request->headers->set('asaas-access-token', 'wrong_token');
 
-    $middleware = new VerifyWebhookSignature();
+    $middleware = new VerifyWebhookSignature;
 
     $response = $middleware->handle($request, function ($req) {
         return response('OK');
@@ -83,7 +83,7 @@ test('middleware passes when token is valid', function () {
     $request = Request::create('/webhook', 'POST');
     $request->headers->set('asaas-access-token', 'valid_secret_token');
 
-    $middleware = new VerifyWebhookSignature();
+    $middleware = new VerifyWebhookSignature;
 
     $response = $middleware->handle($request, function ($req) {
         return response('OK');
@@ -101,7 +101,7 @@ test('middleware uses timing-safe comparison', function () {
 
     Log::shouldReceive('warning')->once();
 
-    $middleware = new VerifyWebhookSignature();
+    $middleware = new VerifyWebhookSignature;
 
     $response = $middleware->handle($request, function ($req) {
         return response('OK');

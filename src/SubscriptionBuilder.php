@@ -13,26 +13,47 @@ use InvalidArgumentException;
 class SubscriptionBuilder
 {
     protected Model $owner;
+
     protected string $type;
+
     protected string $plan;
+
     protected ?float $value = null;
+
     protected SubscriptionCycle $cycle = SubscriptionCycle::MONTHLY;
+
     protected BillingType $billingType = BillingType::UNDEFINED;
+
     protected ?Carbon $nextDueDate = null;
+
     protected ?string $description = null;
+
     protected ?int $trialDays = null;
+
     protected ?Carbon $trialEndsAt = null;
+
     protected ?array $creditCard = null;
+
     protected ?array $creditCardHolderInfo = null;
+
     protected ?string $creditCardToken = null;
+
     protected ?string $remoteIp = null;
+
     protected array $metadata = [];
+
     protected array $split = [];
+
     protected bool $updatePendingPayments = false;
+
     protected ?int $maxPayments = null;
+
     protected ?Carbon $endDate = null;
+
     protected ?float $discount = null;
+
     protected ?float $interest = null;
+
     protected ?float $fine = null;
 
     public function __construct(Model $owner, string $type, string $plan)
@@ -48,6 +69,7 @@ class SubscriptionBuilder
     public function price(float $value): self
     {
         $this->value = $value;
+
         return $this;
     }
 
@@ -57,6 +79,7 @@ class SubscriptionBuilder
     public function cycle(SubscriptionCycle $cycle): self
     {
         $this->cycle = $cycle;
+
         return $this;
     }
 
@@ -98,6 +121,7 @@ class SubscriptionBuilder
     public function billingType(BillingType $type): self
     {
         $this->billingType = $type;
+
         return $this;
     }
 
@@ -110,17 +134,17 @@ class SubscriptionBuilder
         ?string $remoteIp = null
     ): self {
         $this->billingType = BillingType::CREDIT_CARD;
-        
+
         if ($creditCard) {
             $this->creditCard = $creditCard;
         }
-        
+
         if ($holderInfo) {
             $this->creditCardHolderInfo = $holderInfo;
         }
-        
+
         $this->remoteIp = $remoteIp ?? request()->ip();
-        
+
         return $this;
     }
 
@@ -132,7 +156,7 @@ class SubscriptionBuilder
         $this->billingType = BillingType::CREDIT_CARD;
         $this->creditCardToken = $token;
         $this->remoteIp = $remoteIp ?? request()->ip();
-        
+
         return $this;
     }
 
@@ -142,6 +166,7 @@ class SubscriptionBuilder
     public function withBoleto(): self
     {
         $this->billingType = BillingType::BOLETO;
+
         return $this;
     }
 
@@ -151,6 +176,7 @@ class SubscriptionBuilder
     public function withPix(): self
     {
         $this->billingType = BillingType::PIX;
+
         return $this;
     }
 
@@ -160,6 +186,7 @@ class SubscriptionBuilder
     public function askCustomer(): self
     {
         $this->billingType = BillingType::UNDEFINED;
+
         return $this;
     }
 
@@ -169,6 +196,7 @@ class SubscriptionBuilder
     public function startsAt(Carbon $date): self
     {
         $this->nextDueDate = $date;
+
         return $this;
     }
 
@@ -178,6 +206,7 @@ class SubscriptionBuilder
     public function startImmediately(): self
     {
         $this->nextDueDate = Carbon::today();
+
         return $this;
     }
 
@@ -189,7 +218,7 @@ class SubscriptionBuilder
         $this->trialDays = $days;
         $this->trialEndsAt = Carbon::now()->addDays($days);
         $this->nextDueDate = $this->trialEndsAt;
-        
+
         return $this;
     }
 
@@ -200,7 +229,7 @@ class SubscriptionBuilder
     {
         $this->trialEndsAt = $date;
         $this->nextDueDate = $date;
-        
+
         return $this;
     }
 
@@ -211,7 +240,7 @@ class SubscriptionBuilder
     {
         $this->trialDays = null;
         $this->trialEndsAt = null;
-        
+
         return $this;
     }
 
@@ -221,6 +250,7 @@ class SubscriptionBuilder
     public function description(string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -230,6 +260,7 @@ class SubscriptionBuilder
     public function maxPayments(int $max): self
     {
         $this->maxPayments = $max;
+
         return $this;
     }
 
@@ -239,6 +270,7 @@ class SubscriptionBuilder
     public function endsAt(Carbon $date): self
     {
         $this->endDate = $date;
+
         return $this;
     }
 
@@ -248,6 +280,7 @@ class SubscriptionBuilder
     public function withDiscount(float $value, int $dueDateLimitDays = 0): self
     {
         $this->discount = $value;
+
         return $this;
     }
 
@@ -257,6 +290,7 @@ class SubscriptionBuilder
     public function withInterest(float $percentage): self
     {
         $this->interest = $percentage;
+
         return $this;
     }
 
@@ -266,26 +300,27 @@ class SubscriptionBuilder
     public function withFine(float $value): self
     {
         $this->fine = $value;
+
         return $this;
     }
 
     /**
      * Add payment split (revenue sharing).
      */
-    public function split(string $walletId, float $fixedValue = null, float $percentualValue = null): self
+    public function split(string $walletId, ?float $fixedValue = null, ?float $percentualValue = null): self
     {
         $split = ['walletId' => $walletId];
-        
+
         if ($fixedValue !== null) {
             $split['fixedValue'] = $fixedValue;
         }
-        
+
         if ($percentualValue !== null) {
             $split['percentualValue'] = $percentualValue;
         }
-        
+
         $this->split[] = $split;
-        
+
         return $this;
     }
 
@@ -295,6 +330,7 @@ class SubscriptionBuilder
     public function withMetadata(array $metadata): self
     {
         $this->metadata = array_merge($this->metadata, $metadata);
+
         return $this;
     }
 
@@ -316,7 +352,7 @@ class SubscriptionBuilder
 
         // Resolve price from plan config if not set
         $value = $this->value ?? $this->resolvePlanPrice();
-        
+
         if ($value === null) {
             throw new InvalidArgumentException('Subscription price must be set via price() or defined in config.');
         }
@@ -344,7 +380,7 @@ class SubscriptionBuilder
                 $payload['creditCard'] = $this->creditCard;
                 $payload['creditCardHolderInfo'] = $this->creditCardHolderInfo;
             }
-            
+
             if ($this->remoteIp) {
                 $payload['remoteIp'] = $this->remoteIp;
             }

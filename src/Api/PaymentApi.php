@@ -99,6 +99,7 @@ class PaymentApi
     public function status(string $id): string
     {
         $payment = $this->find($id);
+
         return $payment['status'];
     }
 

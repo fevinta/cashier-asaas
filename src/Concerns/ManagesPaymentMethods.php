@@ -36,10 +36,10 @@ trait ManagesPaymentMethods
     {
         // Get from active subscription if exists
         $subscription = $this->subscription('default');
-        
+
         if ($subscription) {
             $asaasSubscription = $subscription->asAsaasSubscription();
-            
+
             if (isset($asaasSubscription['creditCard'])) {
                 return [
                     'type' => 'credit_card',

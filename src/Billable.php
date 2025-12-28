@@ -11,7 +11,7 @@ use Fevinta\CashierAsaas\Concerns\PerformsCharges;
 
 /**
  * Add this trait to your User model to enable Asaas billing.
- * 
+ *
  * @example
  * class User extends Authenticatable
  * {

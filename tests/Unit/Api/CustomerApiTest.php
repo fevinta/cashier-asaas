@@ -21,7 +21,7 @@ test('create creates customer successfully', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->create([
         'name' => 'Test Customer',
         'email' => 'test@example.com',
@@ -39,7 +39,7 @@ test('create throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $api->create(['name' => 'Test', 'cpfCnpj' => 'invalid']);
 })->throws(AsaasApiException::class, 'Invalid CPF/CNPJ');
 
@@ -52,7 +52,7 @@ test('find returns customer by id', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->find('cus_123');
 
     expect($result['id'])->toBe('cus_123');
@@ -65,7 +65,7 @@ test('find throws exception when customer not found', function () {
         ], 404),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $api->find('cus_nonexistent');
 })->throws(AsaasApiException::class);
 
@@ -78,7 +78,7 @@ test('update updates customer successfully', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->update('cus_123', [
         'name' => 'Updated Customer',
         'email' => 'updated@example.com',
@@ -94,7 +94,7 @@ test('update throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $api->update('cus_123', ['email' => 'invalid']);
 })->throws(AsaasApiException::class);
 
@@ -105,7 +105,7 @@ test('delete deletes customer successfully', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->delete('cus_123');
 
     expect($result)->toBeTrue();
@@ -118,7 +118,7 @@ test('delete throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $api->delete('cus_123');
 })->throws(AsaasApiException::class);
 
@@ -136,7 +136,7 @@ test('list returns customers with pagination', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->list();
 
     expect($result['data'])->toHaveCount(2);
@@ -150,7 +150,7 @@ test('list throws exception on failure', function () {
         ], 401),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $api->list();
 })->throws(AsaasApiException::class);
 
@@ -164,7 +164,7 @@ test('list filters customers by parameters', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->list(['cpfCnpj' => '12345678909']);
 
     expect($result['data'])->toHaveCount(1);
@@ -180,7 +180,7 @@ test('findByCpfCnpj returns customer when found', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->findByCpfCnpj('12345678909');
 
     expect($result['id'])->toBe('cus_123');
@@ -195,7 +195,7 @@ test('findByCpfCnpj returns null when not found', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->findByCpfCnpj('00000000000');
 
     expect($result)->toBeNull();
@@ -211,7 +211,7 @@ test('findByExternalReference returns customer when found', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->findByExternalReference('user_1');
 
     expect($result['id'])->toBe('cus_123');
@@ -226,7 +226,7 @@ test('findByExternalReference returns null when not found', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->findByExternalReference('nonexistent');
 
     expect($result)->toBeNull();
@@ -241,7 +241,7 @@ test('restore restores deleted customer successfully', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->restore('cus_123');
 
     expect($result['id'])->toBe('cus_123');
@@ -255,7 +255,7 @@ test('restore throws exception when customer cannot be restored', function () {
         ], 400),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $api->restore('cus_123');
 })->throws(AsaasApiException::class);
 
@@ -268,7 +268,7 @@ test('notifications returns customer notifications', function () {
         ], 200),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $result = $api->notifications('cus_123');
 
     expect($result['data'])->toHaveCount(1);
@@ -281,6 +281,6 @@ test('notifications throws exception on failure', function () {
         ], 404),
     ]);
 
-    $api = new CustomerApi();
+    $api = new CustomerApi;
     $api->notifications('cus_123');
 })->throws(AsaasApiException::class);

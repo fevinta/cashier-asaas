@@ -72,7 +72,7 @@ class Cashier
         $money = new Money((int) ($amount * 100), new Currency($currency));
 
         $numberFormatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
-        $moneyFormatter = new IntlMoneyFormatter($numberFormatter, new ISOCurrencies());
+        $moneyFormatter = new IntlMoneyFormatter($numberFormatter, new ISOCurrencies);
 
         return $moneyFormatter->format($money);
     }

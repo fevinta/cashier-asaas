@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Fevinta\CashierAsaas;
 
 use Carbon\Carbon;
-use Fevinta\CashierAsaas\Enums\BillingType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -59,6 +58,7 @@ class Payment extends Model
     public function owner(): BelongsTo
     {
         $model = config('cashier-asaas.model');
+
         return $this->belongsTo($model, 'customer_id');
     }
 
@@ -162,8 +162,8 @@ class Payment extends Model
             'status' => $asaasPayment['status'],
             'value' => $asaasPayment['value'],
             'net_value' => $asaasPayment['netValue'] ?? $this->net_value,
-            'payment_date' => isset($asaasPayment['paymentDate']) 
-                ? Carbon::parse($asaasPayment['paymentDate']) 
+            'payment_date' => isset($asaasPayment['paymentDate'])
+                ? Carbon::parse($asaasPayment['paymentDate'])
                 : null,
         ]);
 

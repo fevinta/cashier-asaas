@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 class Asaas
 {
     protected static ?string $apiKey = null;
+
     protected static bool $sandbox = false;
 
     /**
@@ -69,7 +70,7 @@ class Asaas
      */
     public static function customer(): CustomerApi
     {
-        return new CustomerApi();
+        return new CustomerApi;
     }
 
     /**
@@ -77,7 +78,7 @@ class Asaas
      */
     public static function subscription(): SubscriptionApi
     {
-        return new SubscriptionApi();
+        return new SubscriptionApi;
     }
 
     /**
@@ -85,7 +86,7 @@ class Asaas
      */
     public static function payment(): PaymentApi
     {
-        return new PaymentApi();
+        return new PaymentApi;
     }
 
     /**
@@ -93,6 +94,6 @@ class Asaas
      */
     public static function webhook(): WebhookApi
     {
-        return new WebhookApi();
+        return new WebhookApi;
     }
 }

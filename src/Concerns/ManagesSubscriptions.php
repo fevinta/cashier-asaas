@@ -13,7 +13,7 @@ trait ManagesSubscriptions
 {
     /**
      * Begin creating a new subscription.
-     * 
+     *
      * @example
      * $user->newSubscription('default', 'monthly')
      *      ->withCreditCard($cardToken)

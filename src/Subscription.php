@@ -6,7 +6,6 @@ namespace Fevinta\CashierAsaas;
 
 use Carbon\Carbon;
 use Fevinta\CashierAsaas\Enums\BillingType;
-use Fevinta\CashierAsaas\Enums\SubscriptionCycle;
 use Fevinta\CashierAsaas\Enums\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -149,7 +148,7 @@ class Subscription extends Model
     public function cancel(): self
     {
         $asaasSubscription = Asaas::subscription()->find($this->asaas_id);
-        
+
         // Cancel in Asaas
         Asaas::subscription()->delete($this->asaas_id);
 

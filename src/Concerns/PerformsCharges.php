@@ -87,7 +87,7 @@ trait PerformsCharges
         array $options = []
     ): Payment {
         $options['creditCardToken'] = $creditCardToken;
-        
+
         return $this->charge($amount, BillingType::CREDIT_CARD, $options);
     }
 
@@ -146,11 +146,11 @@ trait PerformsCharges
     public function refund(string $paymentId, ?float $amount = null, ?string $description = null): array
     {
         $payload = [];
-        
+
         if ($amount !== null) {
             $payload['value'] = $amount;
         }
-        
+
         if ($description !== null) {
             $payload['description'] = $description;
         }
@@ -176,7 +176,7 @@ trait PerformsCharges
         }
 
         $filters['customer'] = $this->asaas_id;
-        
+
         return Asaas::payment()->list($filters);
     }
 }

@@ -24,7 +24,7 @@ test('create creates subscription successfully', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->create([
         'customer' => 'cus_123',
         'billingType' => 'PIX',
@@ -44,7 +44,7 @@ test('create throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $api->create(['customer' => 'invalid']);
 })->throws(AsaasApiException::class);
 
@@ -58,7 +58,7 @@ test('find returns subscription by id', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->find('sub_123');
 
     expect($result['id'])->toBe('sub_123');
@@ -72,7 +72,7 @@ test('find throws exception when subscription not found', function () {
         ], 404),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $api->find('sub_nonexistent');
 })->throws(AsaasApiException::class);
 
@@ -85,7 +85,7 @@ test('update updates subscription successfully', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->update('sub_123', [
         'value' => 150.00,
         'description' => 'Updated subscription',
@@ -101,7 +101,7 @@ test('update throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $api->update('sub_123', ['value' => 100]);
 })->throws(AsaasApiException::class);
 
@@ -112,7 +112,7 @@ test('delete cancels subscription successfully', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->delete('sub_123');
 
     expect($result)->toBeTrue();
@@ -125,7 +125,7 @@ test('delete throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $api->delete('sub_123');
 })->throws(AsaasApiException::class);
 
@@ -143,7 +143,7 @@ test('list returns subscriptions with pagination', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->list();
 
     expect($result['data'])->toHaveCount(2);
@@ -157,7 +157,7 @@ test('list throws exception on failure', function () {
         ], 401),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $api->list();
 })->throws(AsaasApiException::class);
 
@@ -172,7 +172,7 @@ test('payments returns subscription payments', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->payments('sub_123');
 
     expect($result['data'])->toHaveCount(2);
@@ -188,7 +188,7 @@ test('payments with filters works correctly', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->payments('sub_123', ['status' => 'PENDING']);
 
     expect($result['data'])->toHaveCount(1);
@@ -201,7 +201,7 @@ test('payments throws exception on failure', function () {
         ], 404),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $api->payments('sub_123');
 })->throws(AsaasApiException::class);
 
@@ -216,7 +216,7 @@ test('updateCreditCard updates subscription credit card', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->updateCreditCard('sub_123', [
         'creditCard' => [
             'holderName' => 'Test User',
@@ -243,7 +243,7 @@ test('updateCreditCard throws exception on failure', function () {
         ], 400),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $api->updateCreditCard('sub_123', ['creditCard' => ['number' => 'invalid']]);
 })->throws(AsaasApiException::class);
 
@@ -257,7 +257,7 @@ test('invoices returns subscription invoices (alias for payments)', function () 
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->invoices('sub_123');
 
     expect($result['data'])->toHaveCount(1);
@@ -274,7 +274,7 @@ test('findByCustomer returns subscriptions for a customer', function () {
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->findByCustomer('cus_123');
 
     expect($result['data'])->toHaveCount(2);
@@ -289,7 +289,7 @@ test('findByCustomer returns empty when customer has no subscriptions', function
         ], 200),
     ]);
 
-    $api = new SubscriptionApi();
+    $api = new SubscriptionApi;
     $result = $api->findByCustomer('cus_new');
 
     expect($result['data'])->toBeEmpty();

@@ -7,7 +7,6 @@ namespace Fevinta\CashierAsaas\Concerns;
 use Fevinta\CashierAsaas\Asaas;
 use Fevinta\CashierAsaas\Exceptions\CustomerAlreadyCreated;
 use Fevinta\CashierAsaas\Exceptions\InvalidCustomer;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait ManagesCustomer
 {
