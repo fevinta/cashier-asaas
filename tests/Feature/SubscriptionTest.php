@@ -304,3 +304,153 @@ test('generic trial check returns false when expired', function () {
 
     expect($user->onGenericTrial())->toBeFalse();
 });
+
+test('onTrial returns true when on generic trial with no arguments', function () {
+    $user = User::create([
+        'name' => 'Trial User',
+        'email' => 'trial2@example.com',
+        'cpf_cnpj' => generateTestCpf(),
+        'trial_ends_at' => now()->addDays(14),
+    ]);
+
+    expect($user->onTrial())->toBeTrue();
+});
+
+test('onTrial returns false when no subscription and no generic trial', function () {
+    $user = User::create([
+        'name' => 'No Trial User',
+        'email' => 'notrial@example.com',
+        'cpf_cnpj' => generateTestCpf(),
+    ]);
+
+    expect($user->onTrial('default'))->toBeFalse();
+});
+
+test('onTrial returns true when subscription on trial with matching plan', function () {
+    Subscription::create([
+        'user_id' => $this->user->id,
+        'type' => 'default',
+        'asaas_id' => 'sub_trial',
+        'asaas_status' => 'ACTIVE',
+        'plan' => 'premium',
+        'value' => 99.90,
+        'cycle' => 'MONTHLY',
+        'billing_type' => 'PIX',
+        'next_due_date' => now()->addDays(14),
+        'trial_ends_at' => now()->addDays(14),
+    ]);
+
+    expect($this->user->onTrial('default', 'premium'))->toBeTrue();
+    expect($this->user->onTrial('default', 'basic'))->toBeFalse();
+});
+
+test('trialEndsAt returns subscription trial end date', function () {
+    Subscription::create([
+        'user_id' => $this->user->id,
+        'type' => 'default',
+        'asaas_id' => 'sub_trial',
+        'asaas_status' => 'ACTIVE',
+        'plan' => 'premium',
+        'value' => 99.90,
+        'cycle' => 'MONTHLY',
+        'billing_type' => 'PIX',
+        'next_due_date' => now()->addDays(14),
+        'trial_ends_at' => now()->addDays(14),
+    ]);
+
+    $trialEndsAt = $this->user->trialEndsAt('default');
+
+    expect($trialEndsAt)->not->toBeNull();
+    expect($trialEndsAt->isFuture())->toBeTrue();
+});
+
+test('trialEndsAt returns user trial end date when no subscription', function () {
+    $user = User::create([
+        'name' => 'Trial User',
+        'email' => 'trial3@example.com',
+        'cpf_cnpj' => generateTestCpf(),
+        'trial_ends_at' => now()->addDays(7),
+    ]);
+
+    $trialEndsAt = $user->trialEndsAt('default');
+
+    expect($trialEndsAt)->not->toBeNull();
+    expect($trialEndsAt->isFuture())->toBeTrue();
+});
+
+test('trialEndsAt returns null when no trial', function () {
+    $user = User::create([
+        'name' => 'No Trial User',
+        'email' => 'notrial2@example.com',
+        'cpf_cnpj' => generateTestCpf(),
+    ]);
+
+    expect($user->trialEndsAt('default'))->toBeNull();
+});
+
+test('subscribedToPlan returns false for invalid subscription', function () {
+    expect($this->user->subscribedToPlan('premium', 'nonexistent'))->toBeFalse();
+});
+
+test('subscribedToPlan returns false when subscription not valid', function () {
+    Subscription::create([
+        'user_id' => $this->user->id,
+        'type' => 'default',
+        'asaas_id' => 'sub_cancelled',
+        'asaas_status' => 'INACTIVE',
+        'plan' => 'premium',
+        'value' => 99.90,
+        'cycle' => 'MONTHLY',
+        'billing_type' => 'PIX',
+        'next_due_date' => now()->subMonth(),
+        'ends_at' => now()->subDay(),
+    ]);
+
+    expect($this->user->subscribedToPlan('premium', 'default'))->toBeFalse();
+});
+
+test('upcomingPayment returns null when no subscription', function () {
+    expect($this->user->upcomingPayment('nonexistent'))->toBeNull();
+});
+
+test('upcomingPayment returns payment from subscription', function () {
+    Http::fake([
+        Asaas::baseUrl().'/subscriptions/sub_test123/payments*' => Http::response([
+            'data' => [
+                ['id' => 'pay_upcoming', 'value' => 99.90, 'status' => 'PENDING'],
+            ],
+            'totalCount' => 1,
+        ], 200),
+    ]);
+
+    Subscription::create([
+        'user_id' => $this->user->id,
+        'type' => 'default',
+        'asaas_id' => 'sub_test123',
+        'asaas_status' => 'ACTIVE',
+        'plan' => 'premium',
+        'value' => 99.90,
+        'cycle' => 'MONTHLY',
+        'billing_type' => 'PIX',
+        'next_due_date' => now()->addMonth(),
+    ]);
+
+    $upcomingPayment = $this->user->upcomingPayment('default');
+
+    expect($upcomingPayment)->not->toBeNull();
+    expect($upcomingPayment['id'])->toBe('pay_upcoming');
+});
+
+test('subscribed returns false when no subscription', function () {
+    $user = User::create([
+        'name' => 'No Sub User',
+        'email' => 'nosub@example.com',
+        'cpf_cnpj' => generateTestCpf(),
+    ]);
+
+    expect($user->subscribed('default'))->toBeFalse();
+});
+
+test('subscription returns null when no matching subscription', function () {
+    expect($this->user->subscription('nonexistent'))->toBeNull();
+});

@@ -421,3 +421,128 @@ test('boleto payment created dispatches BoletoGenerated event', function () {
         return $event->bankSlipUrl() === 'https://sandbox.asaas.com/b/123';
     });
 });
+
+test('payment created with empty id returns 200 but does not create payment', function () {
+    $response = $this->postJson('/asaas/webhook', [
+        'event' => 'PAYMENT_CREATED',
+        'payment' => [
+            'id' => '',
+            'billingType' => 'PIX',
+            'value' => 99.90,
+            'status' => 'PENDING',
+        ],
+    ]);
+
+    $response->assertStatus(200);
+    Event::assertNotDispatched(PaymentCreated::class);
+});
+
+test('payment created with externalReference finds customer without subscription', function () {
+    // Create payment with externalReference pointing to user but no subscription
+    $response = $this->postJson('/asaas/webhook', [
+        'event' => 'PAYMENT_CREATED',
+        'payment' => [
+            'id' => 'pay_ext_ref123',
+            'customer' => 'cus_test123',
+            'billingType' => 'PIX',
+            'value' => 50.00,
+            'status' => 'PENDING',
+            'dueDate' => now()->addDays(3)->format('Y-m-d'),
+            'externalReference' => (string) $this->user->id,
+        ],
+    ]);
+
+    $response->assertStatus(200);
+
+    $payment = Payment::where('asaas_id', 'pay_ext_ref123')->first();
+    expect($payment)->not->toBeNull();
+    expect($payment->customer_id)->toBe($this->user->id);
+    expect($payment->subscription_id)->toBeNull();
+});
+
+test('payment bank slip viewed webhook dispatches BoletoRegistered event', function () {
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'subscription_id' => $this->subscription->id,
+        'asaas_id' => 'pay_boleto_viewed123',
+        'billing_type' => 'BOLETO',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'PENDING',
+        'due_date' => now()->addDays(3),
+        'bank_slip_url' => 'https://sandbox.asaas.com/b/123',
+    ]);
+
+    $response = $this->postJson('/asaas/webhook', [
+        'event' => 'PAYMENT_BANK_SLIP_VIEWED',
+        'payment' => [
+            'id' => 'pay_boleto_viewed123',
+            'billingType' => 'BOLETO',
+        ],
+    ]);
+
+    $response->assertStatus(200);
+    Event::assertDispatched(\Fevinta\CashierAsaas\Events\BoletoRegistered::class, function ($event) use ($payment) {
+        return $event->payment->id === $payment->id;
+    });
+});
+
+test('payment bank slip viewed does not dispatch event for non-boleto payment', function () {
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'subscription_id' => $this->subscription->id,
+        'asaas_id' => 'pay_pix_viewed123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'PENDING',
+        'due_date' => now()->addDays(3),
+    ]);
+
+    $response = $this->postJson('/asaas/webhook', [
+        'event' => 'PAYMENT_BANK_SLIP_VIEWED',
+        'payment' => [
+            'id' => 'pay_pix_viewed123',
+        ],
+    ]);
+
+    $response->assertStatus(200);
+    Event::assertNotDispatched(\Fevinta\CashierAsaas\Events\BoletoRegistered::class);
+});
+
+test('payment bank slip viewed does nothing when payment not found', function () {
+    $response = $this->postJson('/asaas/webhook', [
+        'event' => 'PAYMENT_BANK_SLIP_VIEWED',
+        'payment' => [
+            'id' => 'pay_unknown',
+        ],
+    ]);
+
+    $response->assertStatus(200);
+    Event::assertNotDispatched(\Fevinta\CashierAsaas\Events\BoletoRegistered::class);
+});
+
+test('payment received does nothing when payment not found', function () {
+    $response = $this->postJson('/asaas/webhook', [
+        'event' => 'PAYMENT_RECEIVED',
+        'payment' => [
+            'id' => 'pay_nonexistent',
+            'status' => 'RECEIVED',
+        ],
+    ]);
+
+    $response->assertStatus(200);
+    Event::assertNotDispatched(PaymentReceived::class);
+});
+
+test('payment received does nothing when payment id is null', function () {
+    $response = $this->postJson('/asaas/webhook', [
+        'event' => 'PAYMENT_RECEIVED',
+        'payment' => [
+            'status' => 'RECEIVED',
+        ],
+    ]);
+
+    $response->assertStatus(200);
+    Event::assertNotDispatched(PaymentReceived::class);
+});

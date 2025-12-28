@@ -268,3 +268,111 @@ test('charge creates customer if not exists', function () {
     expect($userWithoutAsaas->fresh()->asaas_id)->toBe('cus_new');
     expect($payment)->toBeInstanceOf(Payment::class);
 });
+
+test('charge with credit card data without token', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/payments' => Http::response(
+            AsaasApiFixtures::creditCardPayment(['id' => 'pay_cc_123']),
+            200
+        ),
+    ]);
+
+    $payment = $this->user->charge(250.00, \Fevinta\CashierAsaas\Enums\BillingType::CREDIT_CARD, [
+        'creditCard' => [
+            'holderName' => 'Test User',
+            'number' => '4242424242424242',
+            'expiryMonth' => '12',
+            'expiryYear' => '2030',
+            'ccv' => '123',
+        ],
+        'creditCardHolderInfo' => [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'cpfCnpj' => '12345678909',
+        ],
+    ]);
+
+    expect($payment->billing_type)->toBe('CREDIT_CARD');
+});
+
+test('charge installments with credit card data without token', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/payments' => Http::response(
+            AsaasApiFixtures::payment([
+                'id' => 'pay_installment_cc',
+                'billingType' => 'CREDIT_CARD',
+            ]),
+            200
+        ),
+    ]);
+
+    $payment = $this->user->chargeInstallments(1200.00, 12, [
+        'creditCard' => [
+            'holderName' => 'Test User',
+            'number' => '4242424242424242',
+            'expiryMonth' => '12',
+            'expiryYear' => '2030',
+            'ccv' => '123',
+        ],
+        'creditCardHolderInfo' => [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'cpfCnpj' => '12345678909',
+        ],
+    ]);
+
+    expect($payment)->toBeInstanceOf(Payment::class);
+});
+
+test('asaasPayments returns empty when no asaas id', function () {
+    $userWithoutAsaas = User::create([
+        'name' => 'No Asaas User',
+        'email' => 'noasaas@example.com',
+        'cpf_cnpj' => generateTestCpf(),
+    ]);
+
+    $result = $userWithoutAsaas->asaasPayments();
+
+    expect($result['data'])->toBe([]);
+    expect($result['totalCount'])->toBe(0);
+});
+
+test('asaasPayments returns payments from Asaas', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments*' => Http::response([
+            'data' => [
+                ['id' => 'pay_1', 'value' => 99.90, 'status' => 'CONFIRMED'],
+                ['id' => 'pay_2', 'value' => 149.90, 'status' => 'PENDING'],
+            ],
+            'totalCount' => 2,
+        ], 200),
+    ]);
+
+    $result = $this->user->asaasPayments();
+
+    expect($result['data'])->toHaveCount(2);
+    expect($result['totalCount'])->toBe(2);
+});
+
+test('asaasPayments with filters', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments*' => Http::response([
+            'data' => [
+                ['id' => 'pay_1', 'value' => 99.90, 'status' => 'PENDING'],
+            ],
+            'totalCount' => 1,
+        ], 200),
+    ]);
+
+    $result = $this->user->asaasPayments(['status' => 'PENDING']);
+
+    expect($result['data'])->toHaveCount(1);
+});

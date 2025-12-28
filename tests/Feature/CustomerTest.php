@@ -202,3 +202,25 @@ test('user attribute mappers work correctly', function () {
     expect($user->asaasCpfCnpj())->toBe('12345678909');
     expect($user->asaasPhone())->toBe('11999998888');
 });
+
+test('updateAsaasCustomer throws exception when customer not yet created', function () {
+    $user = User::create([
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'cpf_cnpj' => generateTestCpf(),
+    ]);
+
+    expect(fn () => $user->updateAsaasCustomer(['name' => 'New Name']))
+        ->toThrow(\Fevinta\CashierAsaas\Exceptions\InvalidCustomer::class, 'Customer has not been created yet');
+});
+
+test('asAsaasCustomer throws exception when customer not yet created', function () {
+    $user = User::create([
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'cpf_cnpj' => generateTestCpf(),
+    ]);
+
+    expect(fn () => $user->asAsaasCustomer())
+        ->toThrow(\Fevinta\CashierAsaas\Exceptions\InvalidCustomer::class, 'Customer has not been created yet');
+});

@@ -316,3 +316,193 @@ test('builder creates subscription with mocked api', function () {
     expect($subscription->type)->toBe('default');
     expect($subscription->plan)->toBe('premium');
 });
+
+test('builder with credit card', function () {
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $builder->withCreditCard(
+        ['holderName' => 'Test', 'number' => '4242424242424242', 'expiryMonth' => '12', 'expiryYear' => '2030', 'ccv' => '123'],
+        ['name' => 'Test User', 'email' => 'test@test.com', 'cpfCnpj' => '12345678909'],
+        '127.0.0.1'
+    );
+
+    $reflection = new ReflectionClass($builder);
+
+    $billingType = $reflection->getProperty('billingType');
+    $billingType->setAccessible(true);
+    expect($billingType->getValue($builder))->toBe(BillingType::CREDIT_CARD);
+
+    $creditCard = $reflection->getProperty('creditCard');
+    $creditCard->setAccessible(true);
+    expect($creditCard->getValue($builder)['holderName'])->toBe('Test');
+
+    $holderInfo = $reflection->getProperty('creditCardHolderInfo');
+    $holderInfo->setAccessible(true);
+    expect($holderInfo->getValue($builder)['name'])->toBe('Test User');
+
+    $remoteIp = $reflection->getProperty('remoteIp');
+    $remoteIp->setAccessible(true);
+    expect($remoteIp->getValue($builder))->toBe('127.0.0.1');
+});
+
+test('builder with credit card token', function () {
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $builder->withCreditCardToken('cc_tok_123', '127.0.0.1');
+
+    $reflection = new ReflectionClass($builder);
+
+    $billingType = $reflection->getProperty('billingType');
+    $billingType->setAccessible(true);
+    expect($billingType->getValue($builder))->toBe(BillingType::CREDIT_CARD);
+
+    $token = $reflection->getProperty('creditCardToken');
+    $token->setAccessible(true);
+    expect($token->getValue($builder))->toBe('cc_tok_123');
+});
+
+test('builder billing type setter', function () {
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $builder->billingType(BillingType::CREDIT_CARD);
+
+    $reflection = new ReflectionClass($builder);
+    $property = $reflection->getProperty('billingType');
+    $property->setAccessible(true);
+
+    expect($property->getValue($builder))->toBe(BillingType::CREDIT_CARD);
+});
+
+test('builder with split using percentual value', function () {
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $builder->split('wallet_123', null, 10.0);
+
+    $reflection = new ReflectionClass($builder);
+    $property = $reflection->getProperty('split');
+    $property->setAccessible(true);
+
+    $split = $property->getValue($builder);
+    expect($split[0]['walletId'])->toBe('wallet_123');
+    expect($split[0]['percentualValue'])->toBe(10.0);
+});
+
+test('builder creates subscription with credit card token', function () {
+    $subscriptionId = 'sub_'.uniqid();
+
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/subscriptions' => Http::response(
+            AsaasApiFixtures::subscription([
+                'id' => $subscriptionId,
+                'billingType' => 'CREDIT_CARD',
+            ]),
+            200
+        ),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $subscription = $builder
+        ->price(99.90)
+        ->monthly()
+        ->withCreditCardToken('cc_tok_123')
+        ->create();
+
+    expect($subscription->billing_type)->toBe('CREDIT_CARD');
+});
+
+test('builder creates subscription with credit card data', function () {
+    $subscriptionId = 'sub_'.uniqid();
+
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/subscriptions' => Http::response(
+            AsaasApiFixtures::subscription([
+                'id' => $subscriptionId,
+                'billingType' => 'CREDIT_CARD',
+            ]),
+            200
+        ),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $subscription = $builder
+        ->price(99.90)
+        ->monthly()
+        ->withCreditCard(
+            ['holderName' => 'Test', 'number' => '4242424242424242', 'expiryMonth' => '12', 'expiryYear' => '2030', 'ccv' => '123'],
+            ['name' => 'Test User', 'email' => 'test@test.com', 'cpfCnpj' => '12345678909']
+        )
+        ->create();
+
+    expect($subscription->billing_type)->toBe('CREDIT_CARD');
+});
+
+test('builder creates subscription with all optional fields', function () {
+    $subscriptionId = 'sub_'.uniqid();
+
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/subscriptions' => Http::response(
+            AsaasApiFixtures::subscription(['id' => $subscriptionId]),
+            200
+        ),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $subscription = $builder
+        ->price(99.90)
+        ->monthly()
+        ->withPix()
+        ->maxPayments(12)
+        ->endsAt(now()->addYear())
+        ->withDiscount(10.00)
+        ->withInterest(2.0)
+        ->withFine(5.0)
+        ->split('wallet_123', 10.00)
+        ->create();
+
+    expect($subscription)->toBeInstanceOf(\Fevinta\CashierAsaas\Subscription::class);
+});
+
+test('builder throws exception when price not set and not in config', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'nonexistent_plan');
+    $builder->monthly()->withPix()->create();
+})->throws(InvalidArgumentException::class, 'Subscription price must be set');
+
+test('builder resolves price from config', function () {
+    config(['cashier-asaas.plans.premium.price' => 199.90]);
+
+    $subscriptionId = 'sub_'.uniqid();
+
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/subscriptions' => Http::response(
+            AsaasApiFixtures::subscription(['id' => $subscriptionId, 'value' => 199.90]),
+            200
+        ),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $subscription = $builder
+        ->monthly()
+        ->withPix()
+        ->create();
+
+    expect($subscription->value)->toBe('199.90');
+});

@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use Fevinta\CashierAsaas\Asaas;
 use Fevinta\CashierAsaas\Payment;
 use Fevinta\CashierAsaas\Subscription;
 use Fevinta\CashierAsaas\Tests\Fixtures\User;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     $this->user = User::create([
@@ -288,4 +290,231 @@ test('payment casts values correctly', function () {
     expect($payment->due_date)->toBeInstanceOf(\Carbon\Carbon::class);
     expect($payment->metadata)->toBeArray();
     expect($payment->metadata['order_id'])->toBe(123);
+});
+
+test('refund refunds payment successfully', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments/pay_test123/refund' => Http::response([
+            'id' => 'pay_test123',
+            'status' => 'REFUNDED',
+        ], 200),
+    ]);
+
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'RECEIVED',
+        'due_date' => now()->subDays(3),
+        'payment_date' => now()->subDays(3),
+    ]);
+
+    $result = $payment->refund();
+
+    expect($result['status'])->toBe('REFUNDED');
+    expect($payment->fresh()->status)->toBe('REFUNDED');
+    expect($payment->fresh()->refunded_at)->not->toBeNull();
+});
+
+test('refund with partial amount works correctly', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments/pay_test123/refund' => Http::response([
+            'id' => 'pay_test123',
+            'status' => 'REFUNDED',
+            'refundedValue' => 50.00,
+        ], 200),
+    ]);
+
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'RECEIVED',
+        'due_date' => now()->subDays(3),
+        'payment_date' => now()->subDays(3),
+    ]);
+
+    $result = $payment->refund(50.00);
+
+    expect($result['refundedValue'])->toBe(50);
+});
+
+test('refund with description works correctly', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments/pay_test123/refund' => Http::response([
+            'id' => 'pay_test123',
+            'status' => 'REFUNDED',
+        ], 200),
+    ]);
+
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'RECEIVED',
+        'due_date' => now()->subDays(3),
+        'payment_date' => now()->subDays(3),
+    ]);
+
+    $result = $payment->refund(null, 'Customer requested refund');
+
+    expect($result['status'])->toBe('REFUNDED');
+});
+
+test('refund with amount and description works correctly', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments/pay_test123/refund' => Http::response([
+            'id' => 'pay_test123',
+            'status' => 'REFUNDED',
+        ], 200),
+    ]);
+
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'RECEIVED',
+        'due_date' => now()->subDays(3),
+        'payment_date' => now()->subDays(3),
+    ]);
+
+    $result = $payment->refund(25.00, 'Partial refund');
+
+    expect($result['status'])->toBe('REFUNDED');
+});
+
+test('asAsaasPayment returns payment data from Asaas', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments/pay_test123' => Http::response([
+            'id' => 'pay_test123',
+            'customer' => 'cus_test123',
+            'value' => 99.90,
+            'netValue' => 97.90,
+            'status' => 'CONFIRMED',
+            'billingType' => 'PIX',
+        ], 200),
+    ]);
+
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'PENDING',
+        'due_date' => now()->addDays(3),
+    ]);
+
+    $result = $payment->asAsaasPayment();
+
+    expect($result['id'])->toBe('pay_test123');
+    expect($result['status'])->toBe('CONFIRMED');
+});
+
+test('syncFromAsaas syncs payment data from Asaas', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments/pay_test123' => Http::response([
+            'id' => 'pay_test123',
+            'customer' => 'cus_test123',
+            'value' => 150.00,
+            'netValue' => 147.50,
+            'status' => 'CONFIRMED',
+            'billingType' => 'PIX',
+            'paymentDate' => now()->format('Y-m-d'),
+        ], 200),
+    ]);
+
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'PENDING',
+        'due_date' => now()->addDays(3),
+    ]);
+
+    $result = $payment->syncFromAsaas();
+
+    expect($result)->toBeInstanceOf(Payment::class);
+    expect($payment->fresh()->status)->toBe('CONFIRMED');
+    expect($payment->fresh()->value)->toBe('150.00');
+    expect($payment->fresh()->net_value)->toBe('147.50');
+    expect($payment->fresh()->payment_date)->not->toBeNull();
+});
+
+test('syncFromAsaas handles missing netValue', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments/pay_test123' => Http::response([
+            'id' => 'pay_test123',
+            'customer' => 'cus_test123',
+            'value' => 150.00,
+            'status' => 'PENDING',
+            'billingType' => 'PIX',
+        ], 200),
+    ]);
+
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'PENDING',
+        'due_date' => now()->addDays(3),
+    ]);
+
+    $payment->syncFromAsaas();
+
+    // net_value should remain unchanged when not provided
+    expect($payment->fresh()->net_value)->toBe('97.90');
+});
+
+test('syncFromAsaas handles missing paymentDate', function () {
+    Http::fake([
+        Asaas::baseUrl().'/payments/pay_test123' => Http::response([
+            'id' => 'pay_test123',
+            'customer' => 'cus_test123',
+            'value' => 99.90,
+            'netValue' => 97.90,
+            'status' => 'PENDING',
+            'billingType' => 'PIX',
+        ], 200),
+    ]);
+
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'PENDING',
+        'due_date' => now()->addDays(3),
+    ]);
+
+    $payment->syncFromAsaas();
+
+    expect($payment->fresh()->payment_date)->toBeNull();
+});
+
+test('payment url returns null when no urls are set', function () {
+    $payment = Payment::create([
+        'customer_id' => $this->user->id,
+        'asaas_id' => 'pay_test123',
+        'billing_type' => 'PIX',
+        'value' => 99.90,
+        'net_value' => 97.90,
+        'status' => 'PENDING',
+        'due_date' => now()->addDays(3),
+    ]);
+
+    expect($payment->paymentUrl())->toBeNull();
 });

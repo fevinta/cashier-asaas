@@ -189,6 +189,49 @@ $subscription->updateCreditCard($cardData, $holderInfo);
 $subscription->updateCreditCardToken($newToken);
 ```
 
+### Plan Swapping & Proration
+
+When you swap plans, automatic proration is applied via the Asaas API. Here's how it works:
+
+**Example: Upgrading from R$10/month to R$20/month**
+
+```
+Starting point:
+- Current plan: R$10/month
+- Billing cycle: 30 days
+- Days already used: 15 days
+- Days remaining: 15 days
+
+When you upgrade to R$20/month:
+
+1. Credit for unused time at old rate:
+   R$10 x (15/30) = R$5.00
+
+2. Charge for remaining time at new rate:
+   R$20 x (15/30) = R$10.00
+
+3. Prorated upgrade charge:
+   R$10.00 - R$5.00 = R$5.00 (added to next payment)
+
+4. Next full payment: R$20.00
+```
+
+The `swap()` method sends `updatePendingPayments: true` to Asaas, which automatically:
+- Calculates the prorated difference based on days remaining
+- Adjusts pending invoices to include the prorated amount
+- Sets all future payments to the new price
+
+```php
+// Swap using config price
+$subscription->swap('premium');
+
+// Swap with custom price
+$subscription->swap('custom', 99.90);
+
+// Just update price without changing plan name
+$subscription->updateValue(99.90);
+```
+
 ### Single Charges
 
 ```php
@@ -338,7 +381,7 @@ Integration tests hit the real Asaas Sandbox API. They are skipped by default wh
 
 ```bash
 # Set your Asaas Sandbox API key
-export ASAAS_API_KEY=your_sandbox_api_key
+export ASAAS_API_KEY=$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmOTZjMWZhLTI1MTQtNGIyYS1hMDg3LWUwYmRlOWVmMjIwYzo6JGFhY2hfZDg5ZTU5MTctZWFmNi00MmQ1LTg2NGQtYTEyZGI2OGZmNDNl
 
 # Run integration tests
 ./vendor/bin/pest --testsuite=Integration
