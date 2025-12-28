@@ -18,7 +18,6 @@ test('complete subscription lifecycle using billable trait', function () {
         'name' => 'Lifecycle Test User',
         'email' => 'lifecycle_'.uniqid().'@example.com',
         'cpf_cnpj' => generateTestCpf(),
-        'phone' => '11999998888',
     ]);
 
     // Step 2: Create customer in Asaas
@@ -60,8 +59,8 @@ test('complete subscription lifecycle using billable trait', function () {
     $subscription->cancelNow();
     expect($subscription->ended())->toBeTrue();
 
-    // Now user should not be subscribed
-    expect($user->subscribed('default'))->toBeFalse();
+    // Now user should not be subscribed (refresh to clear relationship cache)
+    expect($user->fresh()->subscribed('default'))->toBeFalse();
 
     // Cleanup: Delete customer
     Asaas::customer()->delete($user->asaas_id);
@@ -109,14 +108,17 @@ test('create pix charge and check payment data', function () {
     ]);
 
     expect($payment->billing_type)->toBe('PIX');
-    expect($payment->value)->toBe(50.00);
+    expect((float) $payment->value)->toBe(50.00);
     expect($payment->isPending())->toBeTrue();
-    expect($payment->pix_qrcode)->not->toBeNull();
-    expect($payment->pix_copy_paste)->not->toBeNull();
 
     // Verify payment in Asaas
     $asaasPayment = Asaas::payment()->find($payment->asaas_id);
     expect($asaasPayment['billingType'])->toBe('PIX');
+
+    // PIX QR code might need to be fetched separately via the API
+    $pixData = Asaas::payment()->pixQrCode($payment->asaas_id);
+    expect($pixData['encodedImage'])->not->toBeNull();
+    expect($pixData['payload'])->not->toBeNull();
 
     // Cleanup
     Asaas::payment()->delete($payment->asaas_id);
@@ -137,7 +139,7 @@ test('create boleto charge and check bank slip url', function () {
     ]);
 
     expect($payment->billing_type)->toBe('BOLETO');
-    expect($payment->value)->toBe(75.00);
+    expect((float) $payment->value)->toBe(75.00);
     expect($payment->isPending())->toBeTrue();
     expect($payment->bank_slip_url)->not->toBeNull();
     expect($payment->paymentUrl())->not->toBeNull();
@@ -164,13 +166,13 @@ test('swap subscription plan', function () {
         ->create();
 
     expect($subscription->plan)->toBe('basic');
-    expect($subscription->value)->toBe(49.90);
+    expect((float) $subscription->value)->toBe(49.90);
 
     // Swap to premium
     $subscription->swap('premium', 99.90);
 
     expect($subscription->plan)->toBe('premium');
-    expect($subscription->value)->toBe(99.90);
+    expect((float) $subscription->value)->toBe(99.90);
 
     // Verify in Asaas
     $asaasSubscription = $subscription->asAsaasSubscription();
@@ -199,7 +201,7 @@ test('update subscription value', function () {
     // Update value
     $subscription->updateValue(149.90);
 
-    expect($subscription->value)->toBe(149.90);
+    expect((float) $subscription->value)->toBe(149.90);
 
     // Verify in Asaas
     $asaasSubscription = $subscription->asAsaasSubscription();

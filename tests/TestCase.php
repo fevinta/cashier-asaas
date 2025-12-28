@@ -40,7 +40,9 @@ abstract class TestCase extends Orchestra
         ]);
 
         // Set Cashier Asaas configuration
-        $app['config']->set('cashier-asaas.api_key', 'test_api_key');
+        // Use real API key from environment if available (for integration tests),
+        // otherwise use a fake key (for mocked tests)
+        $app['config']->set('cashier-asaas.api_key', env('ASAAS_API_KEY', 'test_api_key'));
         $app['config']->set('cashier-asaas.sandbox', true);
         $app['config']->set('cashier-asaas.model', User::class);
         $app['config']->set('cashier-asaas.currency', 'BRL');

@@ -16,7 +16,6 @@ test('can create a customer in asaas sandbox', function () {
         'name' => 'Integration Test User '.uniqid(),
         'email' => 'test_'.uniqid().'@example.com',
         'cpfCnpj' => generateTestCpf(),
-        'phone' => '11999999999',
         'externalReference' => 'integration_test_'.uniqid(),
     ]);
 
