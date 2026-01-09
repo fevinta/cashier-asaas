@@ -16,6 +16,7 @@ Laravel Cashier-style subscription billing for [Asaas](https://www.asaas.com) pa
 - ⏰ **Trial Periods**: Support for trial days
 - 🪝 **Webhook Handling**: Automatic payment status updates
 - 🎯 **Laravel-like API**: Familiar Cashier-style fluent interface
+- 🛒 **Asaas Checkout**: Hosted checkout page (like Stripe Checkout)
 
 ## Installation
 
@@ -323,6 +324,231 @@ $user->newSubscription('default', 'pro')
     ->create();
 ```
 
+### Asaas Checkout
+
+The package provides a powerful checkout session builder that redirects customers to Asaas's hosted checkout page. This is similar to Stripe Checkout and allows customers to complete payments without you handling sensitive payment data.
+
+#### Basic Usage
+
+```php
+use Fevinta\CashierAsaas\Checkout;
+
+// Quick checkout for existing customer
+$checkout = $user->checkoutCharge(99.90, 'Premium Feature');
+
+// Redirect to checkout page
+return $checkout->redirect();
+
+// Or get the URL
+$url = $checkout->url();
+```
+
+#### Guest Checkout (No Account Required)
+
+```php
+use Fevinta\CashierAsaas\Checkout;
+
+// Guest checkout - customer data collected on checkout page
+$checkout = Checkout::guest()
+    ->charge(199.90, 'Product Purchase')
+    ->allowAllPaymentMethods()
+    ->successUrl('https://your-app.com/success')
+    ->create();
+
+return $checkout->redirect();
+
+// Or pre-fill customer data
+$checkout = Checkout::guest()
+    ->charge(199.90, 'Product Purchase')
+    ->customerName('John Doe')
+    ->customerEmail('john@example.com')
+    ->customerCpfCnpj('12345678901')
+    ->create();
+```
+
+#### Customer Checkout (Existing User)
+
+```php
+// Using the Billable trait
+$checkout = $user->newCheckout()
+    ->charge(99.90, 'Premium Feature')
+    ->onlyPix()
+    ->successUrl('https://your-app.com/success')
+    ->create();
+
+// Multiple items
+$checkout = $user->checkout([
+    ['name' => 'Product A', 'value' => 50.00, 'quantity' => 2],
+    ['name' => 'Product B', 'value' => 30.00, 'quantity' => 1],
+]);
+```
+
+#### Payment Method Options
+
+```php
+// Allow all payment methods (PIX, Boleto, Credit Card)
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Order #123')
+    ->allowAllPaymentMethods()
+    ->create();
+
+// Only specific methods
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Order #123')
+    ->onlyPix()
+    ->create();
+
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Order #123')
+    ->onlyBoleto()
+    ->create();
+
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Order #123')
+    ->onlyCreditCard()
+    ->create();
+
+// Combine methods
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Order #123')
+    ->withPix()
+    ->withCreditCard()
+    ->create();
+```
+
+#### Installment Payments
+
+```php
+// Fixed installments (credit card only)
+$checkout = $user->newCheckout()
+    ->charge(600.00, 'Annual Plan')
+    ->installments(6) // 6x R$100.00
+    ->create();
+
+// Let customer choose installments (up to max)
+$checkout = $user->newCheckout()
+    ->charge(1200.00, 'Premium Package')
+    ->maxInstallments(12) // Customer chooses 1-12x
+    ->create();
+```
+
+#### Recurring/Subscription Checkout
+
+```php
+use Fevinta\CashierAsaas\Enums\SubscriptionCycle;
+
+// Monthly subscription via checkout
+$checkout = $user->newCheckout()
+    ->charge(99.90, 'Pro Plan')
+    ->monthly()
+    ->create();
+
+// Yearly subscription
+$checkout = $user->newCheckout()
+    ->charge(999.00, 'Pro Plan - Annual')
+    ->yearly()
+    ->create();
+
+// Other cycles
+$checkout = $user->newCheckout()
+    ->charge(49.90, 'Basic Plan')
+    ->weekly()
+    ->create();
+
+$checkout = $user->newCheckout()
+    ->charge(79.90, 'Standard Plan')
+    ->quarterly()
+    ->create();
+```
+
+#### Redirect URLs
+
+```php
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Order #123')
+    ->successUrl('https://your-app.com/checkout/success')
+    ->cancelUrl('https://your-app.com/checkout/canceled')
+    ->expiredUrl('https://your-app.com/checkout/expired')
+    ->create();
+```
+
+Or configure defaults in `config/cashier-asaas.php`:
+
+```php
+'checkout' => [
+    'success_url' => env('ASAAS_CHECKOUT_SUCCESS_URL'),
+    'cancel_url' => env('ASAAS_CHECKOUT_CANCEL_URL'),
+    'expired_url' => env('ASAAS_CHECKOUT_EXPIRED_URL'),
+    'expiration_minutes' => env('ASAAS_CHECKOUT_EXPIRATION', 60),
+],
+```
+
+#### Session Options
+
+```php
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Order #123')
+    ->expiresIn(60) // Expires in 60 minutes
+    ->dueDateLimitDays(5) // Boleto due date limit
+    ->externalReference('order-123')
+    ->description('Purchase from My Store')
+    ->withMetadata(['order_id' => 123])
+    ->create();
+```
+
+#### Payment Split in Checkout
+
+```php
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Marketplace Order')
+    ->split('wallet_seller_id', fixedValue: 80.00)
+    ->split('wallet_platform_id', percentualValue: 20)
+    ->create();
+```
+
+#### Using the Checkout Response
+
+```php
+$checkout = $user->newCheckout()
+    ->charge(100.00, 'Order')
+    ->create();
+
+// Get checkout data
+$id = $checkout->id();
+$url = $checkout->url();
+$status = $checkout->status();
+$session = $checkout->session(); // Full API response
+
+// Redirect (in controller)
+return $checkout->redirect();
+
+// Or return as response (implements Responsable)
+return $checkout; // Auto-redirects
+
+// JSON response
+return response()->json($checkout->toArray());
+```
+
+#### Checkout Webhook Events
+
+```php
+// In EventServiceProvider
+protected $listen = [
+    \Fevinta\CashierAsaas\Events\CheckoutCreated::class => [
+        \App\Listeners\HandleCheckoutCreated::class,
+    ],
+    \Fevinta\CashierAsaas\Events\CheckoutPaid::class => [
+        \App\Listeners\HandleCheckoutPaid::class,
+    ],
+    \Fevinta\CashierAsaas\Events\CheckoutCanceled::class => [
+        \App\Listeners\HandleCheckoutCanceled::class,
+    ],
+    \Fevinta\CashierAsaas\Events\CheckoutExpired::class => [
+        \App\Listeners\HandleCheckoutExpired::class,
+    ],
+];
+```
+
 ## API Reference
 
 ### Billable Trait Methods
@@ -337,6 +563,9 @@ $user->newSubscription('default', 'pro')
 | `subscribed($type)` | Check if subscribed |
 | `onTrial($type)` | Check if on trial |
 | `charge($amount, $type, $options)` | Single charge |
+| `newCheckout()` | Start checkout builder |
+| `checkout($items, $options)` | Create checkout with items |
+| `checkoutCharge($amount, $name)` | Quick single charge checkout |
 
 ### Subscription Methods
 
@@ -350,6 +579,42 @@ $user->newSubscription('default', 'pro')
 | `swap($plan)` | Change plan |
 | `updateValue($value)` | Update subscription price |
 | `updateCreditCard()` | Update payment card |
+
+### Checkout Builder Methods
+
+| Method | Description |
+|--------|-------------|
+| `charge($amount, $description)` | Add single item |
+| `addItem($name, $value, $qty)` | Add item to checkout |
+| `items($items)` | Set multiple items |
+| `allowAllPaymentMethods()` | Enable PIX, Boleto, Credit Card |
+| `onlyPix()` | Only allow PIX |
+| `onlyBoleto()` | Only allow Boleto |
+| `onlyCreditCard()` | Only allow Credit Card |
+| `withPix()` / `withBoleto()` / `withCreditCard()` | Add payment method |
+| `oneTime()` | One-time payment (default) |
+| `installments($count)` | Fixed installment payment |
+| `maxInstallments($count)` | Customer chooses installments |
+| `monthly()` / `yearly()` / `weekly()` | Recurring payment cycles |
+| `successUrl($url)` | Set success redirect |
+| `cancelUrl($url)` | Set cancel redirect |
+| `expiredUrl($url)` | Set expired redirect |
+| `expiresIn($minutes)` | Set session expiration |
+| `externalReference($ref)` | Set external reference |
+| `split($walletId, ...)` | Add payment split |
+| `create()` | Create checkout session |
+
+### Checkout Response Methods
+
+| Method | Description |
+|--------|-------------|
+| `id()` | Get checkout session ID |
+| `url()` | Get checkout page URL |
+| `status()` | Get checkout status |
+| `session()` | Get full API response |
+| `redirect()` | Redirect to checkout page |
+| `toArray()` | Convert to array |
+| `toJson()` | Convert to JSON |
 
 ## Testing
 
