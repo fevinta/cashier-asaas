@@ -62,7 +62,9 @@ jobs:
         run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Run tests with coverage
-        run: XDEBUG_MODE=coverage vendor/bin/pest --testsuite=Unit --testsuite=Feature --coverage-clover=coverage.xml
+        env:
+          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
+        run: XDEBUG_MODE=coverage vendor/bin/pest --coverage-clover=coverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
