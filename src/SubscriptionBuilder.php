@@ -335,6 +335,55 @@ class SubscriptionBuilder
     }
 
     /**
+     * Create a checkout session for this subscription.
+     *
+     * Instead of creating the subscription directly, redirects user
+     * to Asaas checkout page where they can complete payment.
+     *
+     * @param  array<string, mixed>  $sessionOptions
+     */
+    public function checkout(array $sessionOptions = []): Checkout
+    {
+        // Resolve price from plan config if not set
+        $value = $this->value ?? $this->resolvePlanPrice();
+
+        if ($value === null) {
+            throw new InvalidArgumentException('Subscription price must be set via price() or defined in config.');
+        }
+
+        $builder = CheckoutBuilder::customer($this->owner)
+            ->recurring($this->cycle)
+            ->addItem(
+                $this->description ?? "Subscription: {$this->plan}",
+                $value,
+                1
+            )
+            ->externalReference(json_encode([
+                'type' => $this->type,
+                'plan' => $this->plan,
+                'owner_id' => $this->owner->getKey(),
+            ]) ?: '');
+
+        // Apply billing type configuration
+        if ($this->billingType !== BillingType::UNDEFINED) {
+            $builder->allowPaymentMethods([$this->billingType]);
+        } else {
+            $builder->allowAllPaymentMethods();
+        }
+
+        // Apply split configuration
+        foreach ($this->split as $split) {
+            $builder->split(
+                $split['walletId'],
+                $split['fixedValue'] ?? null,
+                $split['percentualValue'] ?? null
+            );
+        }
+
+        return $builder->create($sessionOptions);
+    }
+
+    /**
      * Create the subscription.
      */
     public function create(): Subscription

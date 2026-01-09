@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fevinta\CashierAsaas;
 
+use Fevinta\CashierAsaas\Api\CheckoutApi;
 use Fevinta\CashierAsaas\Api\CustomerApi;
 use Fevinta\CashierAsaas\Api\PaymentApi;
 use Fevinta\CashierAsaas\Api\SubscriptionApi;
@@ -95,5 +96,13 @@ class Asaas
     public static function webhook(): WebhookApi
     {
         return new WebhookApi;
+    }
+
+    /**
+     * Checkout API.
+     */
+    public static function checkout(): CheckoutApi
+    {
+        return new CheckoutApi;
     }
 }

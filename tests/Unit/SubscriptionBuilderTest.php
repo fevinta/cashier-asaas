@@ -506,3 +506,304 @@ test('builder resolves price from config', function () {
 
     expect($subscription->value)->toBe('199.90');
 });
+
+test('checkout creates checkout session for subscription', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_123',
+            'status' => 'ACTIVE',
+            'chargeType' => 'RECURRENT',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->price(99.90)
+        ->monthly()
+        ->checkout();
+
+    expect($checkout)->toBeInstanceOf(\Fevinta\CashierAsaas\Checkout::class);
+    expect($checkout->id())->toBe('checkout_sub_123');
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return $body['chargeType'] === 'RECURRENT'
+                && $body['subscriptionCycle'] === 'MONTHLY'
+                && isset($body['externalReference']);
+        }
+
+        return true;
+    });
+});
+
+test('checkout throws exception when price not set and not in config', function () {
+    $builder = new SubscriptionBuilder($this->user, 'default', 'nonexistent_plan');
+    $builder->monthly()->checkout();
+})->throws(InvalidArgumentException::class, 'Subscription price must be set');
+
+test('checkout uses specific billing type when set', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_pix',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->price(99.90)
+        ->monthly()
+        ->withPix()
+        ->checkout();
+
+    expect($checkout->id())->toBe('checkout_sub_pix');
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return $body['billingTypes'] === ['PIX'];
+        }
+
+        return true;
+    });
+});
+
+test('checkout allows all payment methods when billing type is undefined', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_all',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->price(99.90)
+        ->monthly()
+        ->askCustomer()
+        ->checkout();
+
+    expect($checkout->id())->toBe('checkout_sub_all');
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return count($body['billingTypes']) === 3
+                && in_array('PIX', $body['billingTypes'])
+                && in_array('CREDIT_CARD', $body['billingTypes'])
+                && in_array('BOLETO', $body['billingTypes']);
+        }
+
+        return true;
+    });
+});
+
+test('checkout includes split configuration', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_split',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->price(99.90)
+        ->monthly()
+        ->split('wallet_123', 10.00, null)
+        ->split('wallet_456', null, 5.0)
+        ->checkout();
+
+    expect($checkout->id())->toBe('checkout_sub_split');
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return isset($body['split'])
+                && count($body['split']) === 2
+                && $body['split'][0]['walletId'] === 'wallet_123'
+                && $body['split'][0]['fixedValue'] === 10.00
+                && $body['split'][1]['walletId'] === 'wallet_456'
+                && $body['split'][1]['percentualValue'] === 5.0;
+        }
+
+        return true;
+    });
+});
+
+test('checkout uses custom description when set', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_desc',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->price(99.90)
+        ->monthly()
+        ->description('Custom Premium Plan')
+        ->checkout();
+
+    expect($checkout->id())->toBe('checkout_sub_desc');
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return $body['items'][0]['name'] === 'Custom Premium Plan';
+        }
+
+        return true;
+    });
+});
+
+test('checkout uses default description when not set', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_default_desc',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->price(99.90)
+        ->monthly()
+        ->checkout();
+
+    expect($checkout->id())->toBe('checkout_sub_default_desc');
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return $body['items'][0]['name'] === 'Subscription: premium';
+        }
+
+        return true;
+    });
+});
+
+test('checkout includes external reference with subscription metadata', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_ref',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->price(99.90)
+        ->monthly()
+        ->checkout();
+
+    Http::assertSent(function ($request) use (&$builder) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+            $reference = json_decode($body['externalReference'], true);
+
+            return $reference['type'] === 'default'
+                && $reference['plan'] === 'premium'
+                && isset($reference['owner_id']);
+        }
+
+        return true;
+    });
+});
+
+test('checkout passes session options', function () {
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_opts',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->price(99.90)
+        ->monthly()
+        ->checkout(['expirationMinutes' => 30]);
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return ($body['expirationMinutes'] ?? null) === 30;
+        }
+
+        return true;
+    });
+});
+
+test('checkout resolves price from config', function () {
+    config(['cashier-asaas.plans.premium.price' => 199.90]);
+
+    Http::fake([
+        Asaas::baseUrl().'/customers/cus_test123' => Http::response(
+            AsaasApiFixtures::customer(['id' => 'cus_test123']),
+            200
+        ),
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_sub_config',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    $builder = new SubscriptionBuilder($this->user, 'default', 'premium');
+    $checkout = $builder
+        ->monthly()
+        ->checkout();
+
+    expect($checkout->id())->toBe('checkout_sub_config');
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return $body['items'][0]['value'] === 199.90;
+        }
+
+        return true;
+    });
+});

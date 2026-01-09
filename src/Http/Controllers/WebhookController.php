@@ -8,6 +8,10 @@ use Carbon\Carbon;
 use Fevinta\CashierAsaas\Cashier;
 use Fevinta\CashierAsaas\Events\BoletoGenerated;
 use Fevinta\CashierAsaas\Events\BoletoRegistered;
+use Fevinta\CashierAsaas\Events\CheckoutCanceled;
+use Fevinta\CashierAsaas\Events\CheckoutCreated;
+use Fevinta\CashierAsaas\Events\CheckoutExpired;
+use Fevinta\CashierAsaas\Events\CheckoutPaid;
 use Fevinta\CashierAsaas\Events\PaymentConfirmed;
 use Fevinta\CashierAsaas\Events\PaymentCreated;
 use Fevinta\CashierAsaas\Events\PaymentDeleted;
@@ -428,6 +432,154 @@ class WebhookController extends Controller
         }
 
         return $this->successResponse();
+    }
+
+    /**
+     * Handle checkout created webhook.
+     */
+    protected function handleCheckoutCreated(array $payload): SymfonyResponse
+    {
+        $checkoutData = $payload['checkout'] ?? [];
+        $checkoutId = $checkoutData['id'] ?? null;
+
+        if ($checkoutId) {
+            CheckoutCreated::dispatch($checkoutId, $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle checkout paid webhook.
+     */
+    protected function handleCheckoutPaid(array $payload): SymfonyResponse
+    {
+        $checkoutData = $payload['checkout'] ?? [];
+        $checkoutId = $checkoutData['id'] ?? null;
+        $paymentId = $checkoutData['payment'] ?? null;
+        $subscriptionId = $checkoutData['subscription']['id'] ?? null;
+
+        if ($checkoutId) {
+            // Create local payment record if applicable
+            if ($paymentId) {
+                $paymentData = [
+                    'id' => $paymentId,
+                    'customer' => $checkoutData['customer'] ?? null,
+                    'value' => $checkoutData['value'] ?? 0,
+                    'billingType' => $checkoutData['billingType'] ?? 'UNDEFINED',
+                    'status' => 'CONFIRMED',
+                    'dueDate' => $checkoutData['dueDate'] ?? now()->format('Y-m-d'),
+                    'externalReference' => $checkoutData['externalReference'] ?? null,
+                ];
+
+                $this->findOrCreatePayment($paymentData);
+            }
+
+            // Handle subscription creation if it was a recurring checkout
+            if ($subscriptionId) {
+                $subscriptionData = $checkoutData['subscription'];
+                $subscriptionData['id'] = $subscriptionId;
+
+                $this->findOrCreateSubscriptionFromCheckout($subscriptionData, $checkoutData);
+            }
+
+            CheckoutPaid::dispatch($checkoutId, $payload, $paymentId, $subscriptionId);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle checkout canceled webhook.
+     */
+    protected function handleCheckoutCanceled(array $payload): SymfonyResponse
+    {
+        $checkoutData = $payload['checkout'] ?? [];
+        $checkoutId = $checkoutData['id'] ?? null;
+
+        if ($checkoutId) {
+            CheckoutCanceled::dispatch($checkoutId, $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle checkout expired webhook.
+     */
+    protected function handleCheckoutExpired(array $payload): SymfonyResponse
+    {
+        $checkoutData = $payload['checkout'] ?? [];
+        $checkoutId = $checkoutData['id'] ?? null;
+
+        if ($checkoutId) {
+            CheckoutExpired::dispatch($checkoutId, $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Find or create a subscription from checkout data.
+     *
+     * @param  array<string, mixed>  $subscriptionData
+     * @param  array<string, mixed>  $checkoutData
+     */
+    protected function findOrCreateSubscriptionFromCheckout(array $subscriptionData, array $checkoutData): ?Subscription
+    {
+        if (empty($subscriptionData['id'])) {
+            return null;
+        }
+
+        // Try to find existing subscription
+        $subscription = $this->findSubscription($subscriptionData['id']);
+
+        if ($subscription) {
+            return $subscription;
+        }
+
+        // Try to determine the owner from external reference
+        $customerId = null;
+        $type = 'default';
+        $plan = 'default';
+
+        if (! empty($checkoutData['externalReference'])) {
+            $reference = json_decode($checkoutData['externalReference'], true);
+
+            if (is_array($reference)) {
+                $customerId = $reference['owner_id'] ?? null;
+                $type = $reference['type'] ?? 'default';
+                $plan = $reference['plan'] ?? 'default';
+            }
+        }
+
+        // Fall back to finding customer by Asaas customer ID
+        if (! $customerId && ! empty($checkoutData['customer'])) {
+            $billableModel = config('cashier-asaas.model');
+            $owner = $billableModel::where('asaas_id', $checkoutData['customer'])->first();
+
+            if ($owner) {
+                $customerId = $owner->getKey();
+            }
+        }
+
+        if (! $customerId) {
+            return null;
+        }
+
+        return Cashier::$subscriptionModel::create([
+            'user_id' => $customerId,
+            'type' => $type,
+            'asaas_id' => $subscriptionData['id'],
+            'asaas_status' => $subscriptionData['status'] ?? 'ACTIVE',
+            'plan' => $plan,
+            'value' => $checkoutData['value'] ?? 0,
+            'cycle' => $subscriptionData['cycle'] ?? 'MONTHLY',
+            'billing_type' => $checkoutData['billingType'] ?? 'UNDEFINED',
+            'next_due_date' => isset($subscriptionData['nextDueDate'])
+                ? Carbon::parse($subscriptionData['nextDueDate'])
+                : null,
+        ]);
     }
 
     /**

@@ -177,4 +177,27 @@ return [
         'days_before_due' => env('ASAAS_INVOICE_DAYS_BEFORE', 5),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Checkout Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configure default checkout session settings.
+    |
+    */
+
+    'checkout' => [
+        // Default redirect URLs for checkout sessions
+        'success_url' => env('ASAAS_CHECKOUT_SUCCESS_URL'),
+        'cancel_url' => env('ASAAS_CHECKOUT_CANCEL_URL'),
+        'expired_url' => env('ASAAS_CHECKOUT_EXPIRED_URL'),
+
+        // Default expiration time in minutes (null = no expiration)
+        'expiration_minutes' => env('ASAAS_CHECKOUT_EXPIRATION', null),
+
+        // Default billing types (payment methods) - null means all types allowed
+        // When null, CheckoutBuilder will use: PIX, CREDIT_CARD, BOLETO
+        'default_billing_types' => null,
+    ],
+
 ];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fevinta\CashierAsaas;
 
+use Fevinta\CashierAsaas\Concerns\ManagesCheckouts;
 use Fevinta\CashierAsaas\Concerns\ManagesCustomer;
 use Fevinta\CashierAsaas\Concerns\ManagesPaymentMethods;
 use Fevinta\CashierAsaas\Concerns\ManagesSubscriptions;
@@ -20,6 +21,7 @@ use Fevinta\CashierAsaas\Concerns\PerformsCharges;
  */
 trait Billable
 {
+    use ManagesCheckouts;
     use ManagesCustomer;
     use ManagesPaymentMethods;
     use ManagesSubscriptions;
