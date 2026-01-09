@@ -2,6 +2,7 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/fevinta/cashier-asaas.svg)](https://packagist.org/packages/fevinta/cashier-asaas)
 [![Tests](https://github.com/fevinta/cashier-asaas/actions/workflows/tests.yml/badge.svg)](https://github.com/fevinta/cashier-asaas/actions)
+[![codecov](https://codecov.io/gh/fevinta/cashier-asaas/branch/main/graph/badge.svg)](https://codecov.io/gh/fevinta/cashier-asaas)
 [![Total Downloads](https://img.shields.io/packagist/dt/fevinta/cashier-asaas.svg)](https://packagist.org/packages/fevinta/cashier-asaas)
 [![License](https://img.shields.io/packagist/l/fevinta/cashier-asaas.svg)](LICENSE)
 
