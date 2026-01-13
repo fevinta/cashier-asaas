@@ -23,7 +23,7 @@ test('create creates checkout successfully', function () {
 
     $api = new CheckoutApi;
     $result = $api->create([
-        'chargeType' => 'DETACHED',
+        'chargeTypes' => ['DETACHED'],
         'billingTypes' => ['PIX', 'CREDIT_CARD', 'BOLETO'],
         'items' => [
             ['name' => 'Product', 'value' => 99.90, 'quantity' => 1],
@@ -42,7 +42,7 @@ test('create throws exception on failure', function () {
     ]);
 
     $api = new CheckoutApi;
-    $api->create(['chargeType' => 'invalid']);
+    $api->create(['chargeTypes' => ['invalid']]);
 })->throws(AsaasApiException::class);
 
 test('find returns checkout by id', function () {

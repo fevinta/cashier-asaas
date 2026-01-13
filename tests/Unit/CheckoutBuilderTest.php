@@ -666,7 +666,7 @@ test('create includes installment details in payload', function () {
         if (str_contains($request->url(), '/checkouts')) {
             $body = json_decode($request->body(), true);
 
-            return $body['chargeType'] === 'INSTALLMENT'
+            return $body['chargeTypes'] === ['INSTALLMENT']
                 && $body['installmentCount'] === 12
                 && (float) $body['installmentValue'] === 100.00;
         }
@@ -695,7 +695,7 @@ test('create includes max installment count in payload', function () {
         if (str_contains($request->url(), '/checkouts')) {
             $body = json_decode($request->body(), true);
 
-            return $body['chargeType'] === 'INSTALLMENT'
+            return $body['chargeTypes'] === ['INSTALLMENT']
                 && $body['maxInstallmentCount'] === 6;
         }
 
@@ -722,8 +722,42 @@ test('create includes subscription cycle in payload', function () {
         if (str_contains($request->url(), '/checkouts')) {
             $body = json_decode($request->body(), true);
 
-            return $body['chargeType'] === 'RECURRENT'
-                && $body['subscriptionCycle'] === 'MONTHLY';
+            return $body['chargeTypes'] === ['RECURRENT']
+                && isset($body['subscription'])
+                && $body['subscription']['cycle'] === 'MONTHLY'
+                && isset($body['subscription']['nextDueDate']);
+        }
+
+        return true;
+    });
+});
+
+test('create includes subscription dates in payload', function () {
+    Http::fake([
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_subscription_dates',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    CheckoutBuilder::guest()
+        ->addItem('Subscription', 99.90)
+        ->customerName('John Doe')
+        ->customerCpfCnpj('12345678909')
+        ->monthly()
+        ->subscriptionNextDueDate('2024-10-31 15:02:38')
+        ->subscriptionEndDate('2025-10-31 15:02:38')
+        ->create();
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            return $body['chargeTypes'] === ['RECURRENT']
+                && isset($body['subscription'])
+                && $body['subscription']['cycle'] === 'MONTHLY'
+                && $body['subscription']['nextDueDate'] === '2024-10-31 15:02:38'
+                && $body['subscription']['endDate'] === '2025-10-31 15:02:38';
         }
 
         return true;
@@ -954,6 +988,62 @@ test('create includes customer data for guest checkout', function () {
                 && $body['customerData']['email'] === 'john@example.com'
                 && $body['customerData']['phone'] === '11999999999'
                 && $body['customerData']['mobilePhone'] === '11888888888';
+        }
+
+        return true;
+    });
+});
+
+test('asGuest allows customer to fill data on checkout page', function () {
+    Http::fake([
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_as_guest',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    CheckoutBuilder::customer($this->user)
+        ->addItem('Product', 99.90)
+        ->asGuest()
+        ->create();
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            // Should not include customer ID
+            return ! isset($body['customer'])
+                && ! isset($body['customerData']);
+        }
+
+        return true;
+    });
+});
+
+test('asGuest with customerData pre-fills fields', function () {
+    Http::fake([
+        Asaas::baseUrl().'/checkouts' => Http::response([
+            'id' => 'checkout_as_guest_prefill',
+            'status' => 'ACTIVE',
+        ], 200),
+    ]);
+
+    CheckoutBuilder::customer($this->user)
+        ->addItem('Product', 99.90)
+        ->asGuest()
+        ->customerEmail('prefilled@example.com')
+        ->customerName('Prefilled Name')
+        ->create();
+
+    Http::assertSent(function ($request) {
+        if (str_contains($request->url(), '/checkouts')) {
+            $body = json_decode($request->body(), true);
+
+            // Should not include customer ID but should include customerData
+            return ! isset($body['customer'])
+                && isset($body['customerData'])
+                && $body['customerData']['email'] === 'prefilled@example.com'
+                && $body['customerData']['name'] === 'Prefilled Name';
         }
 
         return true;
