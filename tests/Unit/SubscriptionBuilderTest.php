@@ -533,8 +533,9 @@ test('checkout creates checkout session for subscription', function () {
         if (str_contains($request->url(), '/checkouts')) {
             $body = json_decode($request->body(), true);
 
-            return $body['chargeType'] === 'RECURRENT'
-                && $body['subscriptionCycle'] === 'MONTHLY'
+            return $body['chargeTypes'] === ['RECURRENT']
+                && isset($body['subscription'])
+                && $body['subscription']['cycle'] === 'MONTHLY'
                 && isset($body['externalReference']);
         }
 

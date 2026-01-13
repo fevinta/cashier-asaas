@@ -14,6 +14,8 @@ class CheckoutBuilder
 {
     protected ?Model $owner = null;
 
+    protected bool $sendCustomerId = true;
+
     /** @var array<int, array{name: string, value: float, quantity: int, description?: string}> */
     protected array $items = [];
 
@@ -27,6 +29,10 @@ class CheckoutBuilder
     protected ?float $installmentValue = null;
 
     protected ?SubscriptionCycle $subscriptionCycle = null;
+
+    protected ?string $subscriptionEndDate = null;
+
+    protected ?string $subscriptionNextDueDate = null;
 
     protected ?string $successUrl = null;
 
@@ -63,6 +69,12 @@ class CheckoutBuilder
 
     /**
      * Create a builder for guest checkout.
+     *
+     * Creates a completely anonymous checkout with NO owner reference.
+     * Use this when you don't need to track who made the purchase.
+     *
+     * See asGuest() method documentation for the difference between
+     * guest() and customer()->asGuest().
      */
     public static function guest(): self
     {
@@ -71,6 +83,11 @@ class CheckoutBuilder
 
     /**
      * Create a builder for customer checkout.
+     *
+     * By default, this will send the customer ID to Asaas (requires complete
+     * customer data in Asaas, including address). Use ->asGuest() after this
+     * if you want to keep the owner reference but let the customer fill in
+     * their data on the checkout page.
      */
     public static function customer(Model $owner): self
     {
@@ -342,6 +359,26 @@ class CheckoutBuilder
         return $this->recurring(SubscriptionCycle::SEMIANNUALLY);
     }
 
+    /**
+     * Set subscription end date.
+     */
+    public function subscriptionEndDate(string $endDate): self
+    {
+        $this->subscriptionEndDate = $endDate;
+
+        return $this;
+    }
+
+    /**
+     * Set subscription next due date.
+     */
+    public function subscriptionNextDueDate(string $nextDueDate): self
+    {
+        $this->subscriptionNextDueDate = $nextDueDate;
+
+        return $this;
+    }
+
     // =========================================================================
     // URL Configuration
     // =========================================================================
@@ -435,6 +472,32 @@ class CheckoutBuilder
     // =========================================================================
     // Guest Customer Data
     // =========================================================================
+
+    /**
+     * Allow customer to fill data on checkout page instead of using saved customer.
+     *
+     * IMPORTANT: Understand the difference between guest() and asGuest():
+     *
+     * - guest() → Creates checkout with NO owner at all (completely anonymous)
+     *   Use when: You don't need to track who made the purchase
+     *   Example: CheckoutBuilder::guest()
+     *
+     * - asGuest() → Has owner for internal tracking, but doesn't send customer ID to Asaas
+     *   Use when: You need to track the user internally (webhooks, orders) but the user
+     *             doesn't have complete data in Asaas (missing address, etc.)
+     *   Example: CheckoutBuilder::customer($user)->asGuest()
+     *
+     * This method is useful when:
+     * - You have an owner but the customer doesn't have address data yet
+     * - You want them to fill in/review their information during checkout
+     * - You need internal tracking but can't send customer ID to Asaas
+     */
+    public function asGuest(): self
+    {
+        $this->sendCustomerId = false;
+
+        return $this;
+    }
 
     /**
      * Set customer data for guest checkout.
@@ -578,7 +641,7 @@ class CheckoutBuilder
     protected function buildPayload(): array
     {
         $payload = [
-            'chargeType' => $this->chargeType->value,
+            'chargeTypes' => [$this->chargeType->value],
         ];
 
         // Billing types (payment methods)
@@ -595,7 +658,7 @@ class CheckoutBuilder
         }
 
         // Customer handling
-        if ($this->owner !== null) {
+        if ($this->owner !== null && $this->sendCustomerId) {
             // Ensure customer exists in Asaas
             if (method_exists($this->owner, 'createOrGetAsaasCustomer')) {
                 $this->owner->createOrGetAsaasCustomer();
@@ -607,6 +670,7 @@ class CheckoutBuilder
         } elseif (! empty($this->customerData)) {
             $payload['customerData'] = $this->customerData;
         }
+        // If sendCustomerId is false, customer will fill data on checkout page
 
         // Callback URLs
         $callback = [];
@@ -645,7 +709,23 @@ class CheckoutBuilder
 
         // Recurring/Subscription
         if ($this->chargeType === ChargeType::RECURRENT && $this->subscriptionCycle !== null) {
-            $payload['subscriptionCycle'] = $this->subscriptionCycle->value;
+            $subscription = [
+                'cycle' => $this->subscriptionCycle->value,
+            ];
+
+            // nextDueDate is required - default to today if not set
+            if ($this->subscriptionNextDueDate !== null) {
+                $subscription['nextDueDate'] = $this->subscriptionNextDueDate;
+            } else {
+                $subscription['nextDueDate'] = now()->format('Y-m-d');
+            }
+
+            // endDate is optional
+            if ($this->subscriptionEndDate !== null) {
+                $subscription['endDate'] = $this->subscriptionEndDate;
+            }
+
+            $payload['subscription'] = $subscription;
         }
 
         // Expiration
@@ -672,6 +752,11 @@ class CheckoutBuilder
         // Split payment
         if (! empty($this->split)) {
             $payload['split'] = $this->split;
+        }
+
+        // Metadata
+        if (! empty($this->metadata)) {
+            $payload['metadata'] = $this->metadata;
         }
 
         return $payload;
