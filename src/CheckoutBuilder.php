@@ -588,7 +588,7 @@ class CheckoutBuilder
             BillingType::CREDIT_CARD,
             BillingType::BOLETO,
         ];
-        $payload['billingTypes'] = array_map(fn(BillingType $type) => $type->value, $billingTypes);
+        $payload['billingTypes'] = array_map(fn (BillingType $type) => $type->value, $billingTypes);
 
         // Items
         if (! empty($this->items)) {
