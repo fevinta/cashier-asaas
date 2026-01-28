@@ -32,6 +32,13 @@ class Cashier
     public static string $paymentModel = Payment::class;
 
     /**
+     * The invoice model class name.
+     *
+     * @var class-string<Invoice>
+     */
+    public static string $invoiceModel = Invoice::class;
+
+    /**
      * The custom currency formatter.
      */
     protected static ?\Closure $formatCurrencyUsing = null;
@@ -123,5 +130,25 @@ class Cashier
     public static function paymentModel(): string
     {
         return static::$paymentModel;
+    }
+
+    /**
+     * Use a custom model for invoices.
+     *
+     * @param  class-string<Invoice>  $model
+     */
+    public static function useInvoiceModel(string $model): void
+    {
+        static::$invoiceModel = $model;
+    }
+
+    /**
+     * Get the invoice model class name.
+     *
+     * @return class-string<Invoice>
+     */
+    public static function invoiceModel(): string
+    {
+        return static::$invoiceModel;
     }
 }

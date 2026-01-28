@@ -6,6 +6,7 @@ namespace Fevinta\CashierAsaas;
 
 use Fevinta\CashierAsaas\Api\CheckoutApi;
 use Fevinta\CashierAsaas\Api\CustomerApi;
+use Fevinta\CashierAsaas\Api\InvoiceApi;
 use Fevinta\CashierAsaas\Api\PaymentApi;
 use Fevinta\CashierAsaas\Api\SubscriptionApi;
 use Fevinta\CashierAsaas\Api\WebhookApi;
@@ -104,5 +105,13 @@ class Asaas
     public static function checkout(): CheckoutApi
     {
         return new CheckoutApi;
+    }
+
+    /**
+     * Invoice (Nota Fiscal) API.
+     */
+    public static function invoice(): InvoiceApi
+    {
+        return new InvoiceApi;
     }
 }
