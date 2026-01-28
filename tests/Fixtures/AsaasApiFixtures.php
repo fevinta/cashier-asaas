@@ -190,4 +190,65 @@ class AsaasApiFixtures
             'subscription' => self::subscription($subscriptionOverrides),
         ];
     }
+
+    /**
+     * Generate an invoice response.
+     */
+    public static function invoice(array $overrides = []): array
+    {
+        return array_merge([
+            'id' => 'inv_'.uniqid(),
+            'status' => 'SCHEDULED',
+            'type' => 'NFS-e',
+            'value' => 100.00,
+            'deductions' => 0,
+            'netValue' => 100.00,
+            'serviceDescription' => 'Consulting Services',
+            'observations' => null,
+            'effectiveDate' => now()->addDays(5)->format('Y-m-d'),
+            'municipalServiceId' => null,
+            'municipalServiceCode' => '1234',
+            'municipalServiceName' => 'Consultoria em TI',
+            'rpsNumber' => null,
+            'rpsSerie' => null,
+            'number' => null,
+            'verificationCode' => null,
+            'pdfUrl' => null,
+            'xmlUrl' => null,
+            'taxes' => [
+                'retainIss' => false,
+                'iss' => 5.0,
+                'cofins' => 0,
+                'csll' => 0,
+                'inss' => 0,
+                'ir' => 0,
+                'pis' => 0,
+            ],
+            'externalReference' => null,
+        ], $overrides);
+    }
+
+    /**
+     * Generate an invoice list response.
+     */
+    public static function invoiceList(int $count = 2): array
+    {
+        $invoices = [];
+        for ($i = 0; $i < $count; $i++) {
+            $invoices[] = self::invoice();
+        }
+
+        return self::list($invoices, $count);
+    }
+
+    /**
+     * Generate a webhook payload for an invoice event.
+     */
+    public static function invoiceWebhook(string $event, array $invoiceOverrides = []): array
+    {
+        return [
+            'event' => $event,
+            'invoice' => self::invoice($invoiceOverrides),
+        ];
+    }
 }
