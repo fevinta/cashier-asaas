@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Fevinta\CashierAsaas\Cashier;
+use Fevinta\CashierAsaas\Invoice;
 use Fevinta\CashierAsaas\Payment;
 use Fevinta\CashierAsaas\Subscription;
 
@@ -12,6 +13,7 @@ beforeEach(function () {
     Cashier::$deactivatePastDue = true;
     Cashier::$subscriptionModel = Subscription::class;
     Cashier::$paymentModel = Payment::class;
+    Cashier::$invoiceModel = Invoice::class;
     Cashier::formatCurrencyUsing(null);
 });
 
@@ -21,6 +23,7 @@ afterEach(function () {
     Cashier::$deactivatePastDue = true;
     Cashier::$subscriptionModel = Subscription::class;
     Cashier::$paymentModel = Payment::class;
+    Cashier::$invoiceModel = Invoice::class;
     Cashier::formatCurrencyUsing(null);
 });
 
@@ -107,6 +110,19 @@ test('subscriptionModel returns default model', function () {
 
 test('paymentModel returns default model', function () {
     expect(Cashier::paymentModel())->toBe(Payment::class);
+});
+
+test('useInvoiceModel sets custom invoice model', function () {
+    $customModel = 'App\\Models\\CustomInvoice';
+
+    Cashier::useInvoiceModel($customModel);
+
+    expect(Cashier::$invoiceModel)->toBe($customModel);
+    expect(Cashier::invoiceModel())->toBe($customModel);
+});
+
+test('invoiceModel returns default model', function () {
+    expect(Cashier::invoiceModel())->toBe(Invoice::class);
 });
 
 test('formatAmount with custom formatter receives amount and currency', function () {

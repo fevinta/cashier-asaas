@@ -17,6 +17,7 @@ Laravel Cashier-style subscription billing for [Asaas](https://www.asaas.com) pa
 - 🪝 **Webhook Handling**: Automatic payment status updates
 - 🎯 **Laravel-like API**: Familiar Cashier-style fluent interface
 - 🛒 **Asaas Checkout**: Hosted checkout page (like Stripe Checkout)
+- 🧾 **Invoice (NFS-e)**: Issue and manage Notas Fiscais de Serviço
 
 ## Installation
 
@@ -547,6 +548,180 @@ protected $listen = [
         \App\Listeners\HandleCheckoutExpired::class,
     ],
 ];
+```
+
+### Invoices (Nota Fiscal de Serviço)
+
+The package supports issuing **NFS-e (Nota Fiscal de Serviço)** through the Asaas API. Invoices are scheduled via the API, processed with the city hall (prefeitura), and kept in sync locally through webhooks.
+
+#### Configuration
+
+Add the following to your project's `.env`:
+
+```env
+# Enable invoice support
+ASAAS_INVOICE_ENABLED=true
+
+# Default service description and observations
+ASAAS_INVOICE_SERVICE_DESCRIPTION="Your service description"
+ASAAS_INVOICE_OBSERVATIONS=
+
+# When the invoice effective date is set for subscription invoices:
+# ON_PAYMENT_CONFIRMATION | ON_PAYMENT_DUE_DATE | BEFORE_PAYMENT_DUE_DATE | ON_DUE_DATE_MONTH | ON_NEXT_MONTH
+ASAAS_INVOICE_EFFECTIVE_DATE_PERIOD=ON_PAYMENT_CONFIRMATION
+
+# Days before due date (only used with BEFORE_PAYMENT_DUE_DATE). Valid: 5, 10, 15, 30, 60
+ASAAS_INVOICE_DAYS_BEFORE=5
+
+# Default tax rates (all optional, default 0)
+ASAAS_INVOICE_RETAIN_ISS=false
+ASAAS_INVOICE_ISS=0
+ASAAS_INVOICE_COFINS=0
+ASAAS_INVOICE_CSLL=0
+ASAAS_INVOICE_INSS=0
+ASAAS_INVOICE_IR=0
+ASAAS_INVOICE_PIS=0
+
+# Municipal service defaults
+ASAAS_INVOICE_MUNICIPAL_SERVICE_ID=
+ASAAS_INVOICE_MUNICIPAL_SERVICE_CODE=
+ASAAS_INVOICE_MUNICIPAL_SERVICE_NAME=
+```
+
+Run the migration to create the `asaas_invoices` table:
+
+```bash
+php artisan migrate
+```
+
+#### Scheduling an Invoice
+
+```php
+use Fevinta\CashierAsaas\Asaas;
+
+$result = Asaas::invoice()->schedule([
+    'customer'             => $asaasCustomerId,
+    'serviceDescription'   => 'Software Development',
+    'value'                => 5000.00,
+    'effectiveDate'        => '2026-01-28',
+    'municipalServiceName' => 'Desenvolvimento de software',
+    'deductions'           => 500.00,  // optional
+    'taxes'                => [        // optional, overrides .env defaults
+        'retainIss' => true,
+        'iss'       => 5.0,
+    ],
+]);
+```
+
+#### Working with the Invoice Model
+
+```php
+use Fevinta\CashierAsaas\Invoice;
+
+$invoice = Invoice::find($id);
+
+// Issue the NFS-e immediately
+$invoice->authorize();
+
+// Request cancellation
+$invoice->cancel();
+
+// Refresh local data from the Asaas API
+$invoice->syncFromAsaas();
+
+// Check status
+$invoice->isScheduled();
+$invoice->isSynchronized();
+$invoice->isAuthorized();
+$invoice->isCanceled();
+$invoice->hasError();
+
+// Get document URLs
+$invoice->pdfUrl();
+$invoice->xmlUrl();
+
+// Query scopes
+Invoice::authorized()->get();
+Invoice::scheduled()->where('customer_id', $customerId)->get();
+```
+
+#### Status Lifecycle
+
+```
+SCHEDULED → SYNCHRONIZED → AUTHORIZED
+                         → ERROR
+
+AUTHORIZED → PROCESSING_CANCELLATION → CANCELED
+                                     → CANCELLATION_DENIED
+```
+
+#### API Queries
+
+```php
+Asaas::invoice()->findByPayment($paymentId);
+Asaas::invoice()->findByCustomer($customerId);
+Asaas::invoice()->findByDateRange('2026-01-01', '2026-01-31');
+Asaas::invoice()->findByStatus('AUTHORIZED');
+
+// Fiscal and municipal service info
+Asaas::invoice()->fiscalInfo();
+Asaas::invoice()->saveFiscalInfo([...]);
+Asaas::invoice()->municipalServices();
+```
+
+#### Subscription Invoice Auto-Generation
+
+Configure automatic NFS-e issuance for subscription payments:
+
+```php
+Asaas::invoice()->configureSubscriptionInvoice($subscriptionId, [
+    'effectiveDatePeriod' => 'ON_PAYMENT_CONFIRMATION',
+    'serviceDescription'  => 'Monthly SaaS Service',
+]);
+
+Asaas::invoice()->getSubscriptionInvoiceSettings($subscriptionId);
+Asaas::invoice()->deleteSubscriptionInvoiceSettings($subscriptionId);
+```
+
+#### Invoice Webhook Events
+
+The webhook controller automatically syncs invoice data to the local database and dispatches events:
+
+| Webhook Event | Event Class | Invoice Status |
+|---|---|---|
+| `INVOICE_CREATED` | `InvoiceCreated` | `SCHEDULED` |
+| `INVOICE_UPDATED` | `InvoiceUpdated` | *(varies)* |
+| `INVOICE_SYNCHRONIZED` | `InvoiceSynchronized` | `SYNCHRONIZED` |
+| `INVOICE_AUTHORIZED` | `InvoiceAuthorized` | `AUTHORIZED` |
+| `INVOICE_CANCELED` | `InvoiceCanceled` | `CANCELED` |
+| `INVOICE_CANCELLATION_DENIED` | `InvoiceCancellationDenied` | `CANCELLATION_DENIED` |
+| `INVOICE_ERROR` | `InvoiceError` | `ERROR` |
+
+Listen to invoice events in your application:
+
+```php
+use Fevinta\CashierAsaas\Events\InvoiceAuthorized;
+use Fevinta\CashierAsaas\Events\InvoiceError;
+
+// In EventServiceProvider
+protected $listen = [
+    InvoiceAuthorized::class => [
+        \App\Listeners\SendInvoiceNotification::class,
+    ],
+    InvoiceError::class => [
+        \App\Listeners\HandleInvoiceError::class,
+    ],
+];
+```
+
+#### Custom Invoice Model
+
+If you need to extend the default Invoice model:
+
+```php
+use Fevinta\CashierAsaas\Cashier;
+
+Cashier::useInvoiceModel(YourCustomInvoice::class);
 ```
 
 ## API Reference

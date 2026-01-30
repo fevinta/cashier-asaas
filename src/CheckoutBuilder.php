@@ -8,6 +8,7 @@ use Fevinta\CashierAsaas\Enums\BillingType;
 use Fevinta\CashierAsaas\Enums\ChargeType;
 use Fevinta\CashierAsaas\Enums\SubscriptionCycle;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class CheckoutBuilder
@@ -625,8 +626,8 @@ class CheckoutBuilder
         $payload = $this->buildPayload();
         $payload = array_merge($payload, $sessionOptions);
 
+        Log::info('payload checkout', [$payload]);
         $response = Asaas::checkout()->create($payload);
-
         $id = $response['id'];
         $url = Checkout::formatUrl($id);
 

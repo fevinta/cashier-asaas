@@ -139,3 +139,21 @@ function subscriptionWebhookPayload(string $event, array $subscriptionData = [])
         ], $subscriptionData),
     ]);
 }
+
+/**
+ * Create an invoice webhook payload.
+ */
+function invoiceWebhookPayload(string $event, array $invoiceData = []): array
+{
+    return webhookPayload($event, [
+        'invoice' => array_merge([
+            'id' => 'inv_'.uniqid(),
+            'status' => 'SCHEDULED',
+            'value' => 100.00,
+            'netValue' => 100.00,
+            'serviceDescription' => 'Test Service',
+            'effectiveDate' => now()->addDays(5)->format('Y-m-d'),
+            'municipalServiceName' => 'Consultoria em TI',
+        ], $invoiceData),
+    ]);
+}

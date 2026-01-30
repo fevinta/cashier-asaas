@@ -12,6 +12,13 @@ use Fevinta\CashierAsaas\Events\CheckoutCanceled;
 use Fevinta\CashierAsaas\Events\CheckoutCreated;
 use Fevinta\CashierAsaas\Events\CheckoutExpired;
 use Fevinta\CashierAsaas\Events\CheckoutPaid;
+use Fevinta\CashierAsaas\Events\InvoiceAuthorized;
+use Fevinta\CashierAsaas\Events\InvoiceCanceled;
+use Fevinta\CashierAsaas\Events\InvoiceCancellationDenied;
+use Fevinta\CashierAsaas\Events\InvoiceCreated;
+use Fevinta\CashierAsaas\Events\InvoiceError;
+use Fevinta\CashierAsaas\Events\InvoiceSynchronized;
+use Fevinta\CashierAsaas\Events\InvoiceUpdated;
 use Fevinta\CashierAsaas\Events\PaymentConfirmed;
 use Fevinta\CashierAsaas\Events\PaymentCreated;
 use Fevinta\CashierAsaas\Events\PaymentDeleted;
@@ -26,6 +33,7 @@ use Fevinta\CashierAsaas\Events\SubscriptionUpdated;
 use Fevinta\CashierAsaas\Events\WebhookHandled;
 use Fevinta\CashierAsaas\Events\WebhookReceived;
 use Fevinta\CashierAsaas\Exceptions\InvalidWebhookPayload;
+use Fevinta\CashierAsaas\Invoice;
 use Fevinta\CashierAsaas\Payment;
 use Fevinta\CashierAsaas\Subscription;
 use Illuminate\Http\Request;
@@ -596,5 +604,259 @@ class WebhookController extends Controller
     protected function errorResponse(string $message, int $status = 400): Response
     {
         return new Response($message, $status);
+    }
+
+    /**
+     * Handle invoice created webhook.
+     */
+    protected function handleInvoiceCreated(array $payload): SymfonyResponse
+    {
+        $invoiceData = $payload['invoice'] ?? [];
+
+        $localInvoice = $this->findOrCreateInvoice($invoiceData);
+
+        if ($localInvoice) {
+            InvoiceCreated::dispatch($localInvoice, $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle invoice updated webhook.
+     */
+    protected function handleInvoiceUpdated(array $payload): SymfonyResponse
+    {
+        $invoiceData = $payload['invoice'] ?? [];
+
+        $localInvoice = $this->findInvoice($invoiceData['id'] ?? null);
+
+        if ($localInvoice) {
+            $this->updateInvoiceFromPayload($localInvoice, $invoiceData);
+
+            InvoiceUpdated::dispatch($localInvoice->fresh(), $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle invoice synchronized webhook.
+     */
+    protected function handleInvoiceSynchronized(array $payload): SymfonyResponse
+    {
+        $invoiceData = $payload['invoice'] ?? [];
+
+        $localInvoice = $this->findInvoice($invoiceData['id'] ?? null);
+
+        if ($localInvoice) {
+            $this->updateInvoiceFromPayload($localInvoice, $invoiceData);
+
+            InvoiceSynchronized::dispatch($localInvoice->fresh(), $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle invoice authorized webhook.
+     */
+    protected function handleInvoiceAuthorized(array $payload): SymfonyResponse
+    {
+        $invoiceData = $payload['invoice'] ?? [];
+
+        $localInvoice = $this->findInvoice($invoiceData['id'] ?? null);
+
+        if ($localInvoice) {
+            $this->updateInvoiceFromPayload($localInvoice, $invoiceData);
+
+            InvoiceAuthorized::dispatch($localInvoice->fresh(), $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle invoice canceled webhook.
+     */
+    protected function handleInvoiceCanceled(array $payload): SymfonyResponse
+    {
+        $invoiceData = $payload['invoice'] ?? [];
+
+        $localInvoice = $this->findInvoice($invoiceData['id'] ?? null);
+
+        if ($localInvoice) {
+            $localInvoice->update([
+                'status' => 'CANCELED',
+            ]);
+
+            InvoiceCanceled::dispatch($localInvoice->fresh(), $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle invoice processing cancellation webhook.
+     */
+    protected function handleInvoiceProcessingCancellation(array $payload): SymfonyResponse
+    {
+        $invoiceData = $payload['invoice'] ?? [];
+
+        $localInvoice = $this->findInvoice($invoiceData['id'] ?? null);
+
+        if ($localInvoice) {
+            $localInvoice->update([
+                'status' => 'PROCESSING_CANCELLATION',
+            ]);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle invoice cancellation denied webhook.
+     */
+    protected function handleInvoiceCancellationDenied(array $payload): SymfonyResponse
+    {
+        $invoiceData = $payload['invoice'] ?? [];
+
+        $localInvoice = $this->findInvoice($invoiceData['id'] ?? null);
+
+        if ($localInvoice) {
+            $localInvoice->update([
+                'status' => 'CANCELLATION_DENIED',
+            ]);
+
+            InvoiceCancellationDenied::dispatch($localInvoice->fresh(), $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Handle invoice error webhook.
+     */
+    protected function handleInvoiceError(array $payload): SymfonyResponse
+    {
+        $invoiceData = $payload['invoice'] ?? [];
+
+        $localInvoice = $this->findInvoice($invoiceData['id'] ?? null);
+
+        if ($localInvoice) {
+            $localInvoice->update([
+                'status' => 'ERROR',
+            ]);
+
+            InvoiceError::dispatch($localInvoice->fresh(), $payload);
+        }
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Find an invoice by Asaas ID.
+     */
+    protected function findInvoice(?string $asaasId): ?Invoice
+    {
+        if (! $asaasId) {
+            return null;
+        }
+
+        return Cashier::$invoiceModel::where('asaas_id', $asaasId)->first();
+    }
+
+    /**
+     * Find or create an invoice from webhook data.
+     */
+    protected function findOrCreateInvoice(array $invoiceData): ?Invoice
+    {
+        if (empty($invoiceData['id'])) {
+            return null;
+        }
+
+        $paymentId = null;
+        $customerId = null;
+
+        // Find payment if linked
+        if (! empty($invoiceData['payment'])) {
+            $payment = $this->findPayment($invoiceData['payment']);
+            if ($payment) {
+                $paymentId = $payment->id;
+                $customerId = $payment->customer_id;
+            }
+        }
+
+        // Try to find customer by external reference if no payment
+        if (! $customerId && ! empty($invoiceData['externalReference'])) {
+            $billableModel = config('cashier-asaas.model');
+            $owner = $billableModel::find($invoiceData['externalReference']);
+            if ($owner) {
+                $customerId = $owner->getKey();
+            }
+        }
+
+        // Try to find customer by Asaas customer ID
+        if (! $customerId && ! empty($invoiceData['customer'])) {
+            $billableModel = config('cashier-asaas.model');
+            $owner = $billableModel::where('asaas_id', $invoiceData['customer'])->first();
+            if ($owner) {
+                $customerId = $owner->getKey();
+            }
+        }
+
+        return Cashier::$invoiceModel::updateOrCreate(
+            ['asaas_id' => $invoiceData['id']],
+            [
+                'payment_id' => $paymentId,
+                'customer_id' => $customerId,
+                'status' => $invoiceData['status'] ?? 'SCHEDULED',
+                'type' => $invoiceData['type'] ?? null,
+                'effective_date' => isset($invoiceData['effectiveDate'])
+                    ? Carbon::parse($invoiceData['effectiveDate'])
+                    : null,
+                'value' => $invoiceData['value'] ?? 0,
+                'deductions' => $invoiceData['deductions'] ?? null,
+                'net_value' => $invoiceData['netValue'] ?? $invoiceData['value'] ?? 0,
+                'service_description' => $invoiceData['serviceDescription'] ?? '',
+                'observations' => $invoiceData['observations'] ?? null,
+                'municipal_service_id' => $invoiceData['municipalServiceId'] ?? null,
+                'municipal_service_code' => $invoiceData['municipalServiceCode'] ?? null,
+                'municipal_service_name' => $invoiceData['municipalServiceName'] ?? null,
+                'rps_number' => $invoiceData['rpsNumber'] ?? null,
+                'rps_series' => $invoiceData['rpsSerie'] ?? null,
+                'invoice_number' => $invoiceData['number'] ?? null,
+                'verification_code' => $invoiceData['verificationCode'] ?? null,
+                'pdf_url' => $invoiceData['pdfUrl'] ?? null,
+                'xml_url' => $invoiceData['xmlUrl'] ?? null,
+                'taxes' => $invoiceData['taxes'] ?? null,
+                'external_reference' => $invoiceData['externalReference'] ?? null,
+            ]
+        );
+    }
+
+    /**
+     * Update invoice from webhook payload.
+     */
+    protected function updateInvoiceFromPayload(Invoice $invoice, array $invoiceData): void
+    {
+        $invoice->update([
+            'status' => $invoiceData['status'] ?? $invoice->status,
+            'effective_date' => isset($invoiceData['effectiveDate'])
+                ? Carbon::parse($invoiceData['effectiveDate'])
+                : $invoice->effective_date,
+            'value' => $invoiceData['value'] ?? $invoice->value,
+            'deductions' => $invoiceData['deductions'] ?? $invoice->deductions,
+            'net_value' => $invoiceData['netValue'] ?? $invoice->net_value,
+            'service_description' => $invoiceData['serviceDescription'] ?? $invoice->service_description,
+            'observations' => $invoiceData['observations'] ?? $invoice->observations,
+            'rps_number' => $invoiceData['rpsNumber'] ?? $invoice->rps_number,
+            'rps_series' => $invoiceData['rpsSerie'] ?? $invoice->rps_series,
+            'invoice_number' => $invoiceData['number'] ?? $invoice->invoice_number,
+            'verification_code' => $invoiceData['verificationCode'] ?? $invoice->verification_code,
+            'pdf_url' => $invoiceData['pdfUrl'] ?? $invoice->pdf_url,
+            'xml_url' => $invoiceData['xmlUrl'] ?? $invoice->xml_url,
+            'taxes' => $invoiceData['taxes'] ?? $invoice->taxes,
+        ]);
     }
 }

@@ -77,6 +77,10 @@ test('webhook returns WebhookApi instance', function () {
     expect(Asaas::webhook())->toBeInstanceOf(WebhookApi::class);
 });
 
+test('invoice returns InvoiceApi instance', function () {
+    expect(Asaas::invoice())->toBeInstanceOf(\Fevinta\CashierAsaas\Api\InvoiceApi::class);
+});
+
 test('client returns configured HTTP client', function () {
     $client = Asaas::client();
 
