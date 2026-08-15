@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Fevinta\CashierAsaas\Asaas;
 use Fevinta\CashierAsaas\Enums\BillingType;
 use Fevinta\CashierAsaas\Payment;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait PerformsCharges
 {
@@ -161,7 +162,7 @@ trait PerformsCharges
     /**
      * Get all payments for this customer.
      */
-    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class, 'customer_id');
     }

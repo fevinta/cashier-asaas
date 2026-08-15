@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Fevinta\CashierAsaas\Asaas;
+use Fevinta\CashierAsaas\Enums\BillingType;
 use Fevinta\CashierAsaas\Payment;
 use Fevinta\CashierAsaas\Tests\Concerns\MocksAsaasApi;
 use Fevinta\CashierAsaas\Tests\Fixtures\AsaasApiFixtures;
@@ -281,7 +282,7 @@ test('charge with credit card data without token', function () {
         ),
     ]);
 
-    $payment = $this->user->charge(250.00, \Fevinta\CashierAsaas\Enums\BillingType::CREDIT_CARD, [
+    $payment = $this->user->charge(250.00, BillingType::CREDIT_CARD, [
         'creditCard' => [
             'holderName' => 'Test User',
             'number' => '4242424242424242',

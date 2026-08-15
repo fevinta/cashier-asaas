@@ -42,11 +42,4 @@
         <env name="QUEUE_DRIVER" value="sync"/>
         <env name="ASAAS_SANDBOX" value="true"/>
     </php>
-
-    <coverage>
-        <report>
-            <html outputDirectory="coverage"/>
-            <text outputFile="php://stdout"/>
-        </report>
-    </coverage>
 </phpunit>

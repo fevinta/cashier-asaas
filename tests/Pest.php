@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Fevinta\CashierAsaas\Payment;
+use Fevinta\CashierAsaas\Subscription;
 use Fevinta\CashierAsaas\Tests\TestCase;
 
 /*
@@ -29,12 +31,12 @@ uses(TestCase::class)->in('Feature', 'Unit', 'Integration');
 */
 
 expect()->extend('toBeActiveSubscription', function () {
-    return $this->toBeInstanceOf(\Fevinta\CashierAsaas\Subscription::class)
+    return $this->toBeInstanceOf(Subscription::class)
         ->and($this->value->active())->toBeTrue();
 });
 
 expect()->extend('toBePaidPayment', function () {
-    return $this->toBeInstanceOf(\Fevinta\CashierAsaas\Payment::class)
+    return $this->toBeInstanceOf(Payment::class)
         ->and($this->value->isPaid())->toBeTrue();
 });
 

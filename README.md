@@ -19,6 +19,11 @@ Laravel Cashier-style subscription billing for [Asaas](https://www.asaas.com) pa
 - 🛒 **Asaas Checkout**: Hosted checkout page (like Stripe Checkout)
 - 🧾 **Invoice (NFS-e)**: Issue and manage Notas Fiscais de Serviço
 
+## Requirements
+
+- PHP 8.3+
+- Laravel 12 or 13
+
 ## Installation
 
 ```bash

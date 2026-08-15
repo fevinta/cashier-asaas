@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Fevinta\CashierAsaas\Asaas;
 use Fevinta\CashierAsaas\Exceptions\CustomerAlreadyCreated;
+use Fevinta\CashierAsaas\Exceptions\InvalidCustomer;
 use Fevinta\CashierAsaas\Tests\Concerns\MocksAsaasApi;
 use Fevinta\CashierAsaas\Tests\Fixtures\AsaasApiFixtures;
 use Fevinta\CashierAsaas\Tests\Fixtures\User;
@@ -211,7 +212,7 @@ test('updateAsaasCustomer throws exception when customer not yet created', funct
     ]);
 
     expect(fn () => $user->updateAsaasCustomer(['name' => 'New Name']))
-        ->toThrow(\Fevinta\CashierAsaas\Exceptions\InvalidCustomer::class, 'Customer has not been created yet');
+        ->toThrow(InvalidCustomer::class, 'Customer has not been created yet');
 });
 
 test('asAsaasCustomer throws exception when customer not yet created', function () {
@@ -222,5 +223,5 @@ test('asAsaasCustomer throws exception when customer not yet created', function 
     ]);
 
     expect(fn () => $user->asAsaasCustomer())
-        ->toThrow(\Fevinta\CashierAsaas\Exceptions\InvalidCustomer::class, 'Customer has not been created yet');
+        ->toThrow(InvalidCustomer::class, 'Customer has not been created yet');
 });

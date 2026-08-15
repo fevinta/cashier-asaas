@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fevinta\CashierAsaas\Tests\Fixtures;
 
+use Carbon\Carbon;
 use Fevinta\CashierAsaas\Billable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -17,9 +18,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property string|null $cpf_cnpj
  * @property string|null $phone
  * @property string|null $asaas_id
- * @property \Carbon\Carbon|null $trial_ends_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
+ * @property Carbon|null $trial_ends_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class User extends Authenticatable
 {

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Fevinta\CashierAsaas\Events\BoletoGenerated;
+use Fevinta\CashierAsaas\Events\BoletoRegistered;
 use Fevinta\CashierAsaas\Events\PaymentConfirmed;
 use Fevinta\CashierAsaas\Events\PaymentCreated;
 use Fevinta\CashierAsaas\Events\PaymentDeleted;
@@ -482,7 +483,7 @@ test('payment bank slip viewed webhook dispatches BoletoRegistered event', funct
     ]);
 
     $response->assertStatus(200);
-    Event::assertDispatched(\Fevinta\CashierAsaas\Events\BoletoRegistered::class, function ($event) use ($payment) {
+    Event::assertDispatched(BoletoRegistered::class, function ($event) use ($payment) {
         return $event->payment->id === $payment->id;
     });
 });
@@ -507,7 +508,7 @@ test('payment bank slip viewed does not dispatch event for non-boleto payment', 
     ]);
 
     $response->assertStatus(200);
-    Event::assertNotDispatched(\Fevinta\CashierAsaas\Events\BoletoRegistered::class);
+    Event::assertNotDispatched(BoletoRegistered::class);
 });
 
 test('payment bank slip viewed does nothing when payment not found', function () {
@@ -519,7 +520,7 @@ test('payment bank slip viewed does nothing when payment not found', function ()
     ]);
 
     $response->assertStatus(200);
-    Event::assertNotDispatched(\Fevinta\CashierAsaas\Events\BoletoRegistered::class);
+    Event::assertNotDispatched(BoletoRegistered::class);
 });
 
 test('payment received does nothing when payment not found', function () {
