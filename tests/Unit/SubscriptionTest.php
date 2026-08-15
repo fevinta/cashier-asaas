@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Carbon\Carbon;
 use Fevinta\CashierAsaas\Asaas;
 use Fevinta\CashierAsaas\Enums\BillingType;
 use Fevinta\CashierAsaas\Payment;
@@ -270,8 +271,8 @@ test('subscription casts dates correctly', function () {
         'trial_ends_at' => $trialEndsAt,
     ]);
 
-    expect($subscription->next_due_date)->toBeInstanceOf(\Carbon\Carbon::class);
-    expect($subscription->trial_ends_at)->toBeInstanceOf(\Carbon\Carbon::class);
+    expect($subscription->next_due_date)->toBeInstanceOf(Carbon::class);
+    expect($subscription->trial_ends_at)->toBeInstanceOf(Carbon::class);
 });
 
 test('subscription user method returns owner', function () {

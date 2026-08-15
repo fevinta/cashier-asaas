@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Carbon\Carbon;
 use Fevinta\CashierAsaas\Asaas;
 use Fevinta\CashierAsaas\Payment;
 use Fevinta\CashierAsaas\Subscription;
@@ -287,7 +288,7 @@ test('payment casts values correctly', function () {
     expect($payment->value)->toBe('99.90');
     expect($payment->net_value)->toBeString();
     expect($payment->net_value)->toBe('97.90');
-    expect($payment->due_date)->toBeInstanceOf(\Carbon\Carbon::class);
+    expect($payment->due_date)->toBeInstanceOf(Carbon::class);
     expect($payment->metadata)->toBeArray();
     expect($payment->metadata['order_id'])->toBe(123);
 });

@@ -6,6 +6,7 @@ use Fevinta\CashierAsaas\Events\CheckoutCanceled;
 use Fevinta\CashierAsaas\Events\CheckoutCreated;
 use Fevinta\CashierAsaas\Events\CheckoutExpired;
 use Fevinta\CashierAsaas\Events\CheckoutPaid;
+use Fevinta\CashierAsaas\Subscription;
 use Fevinta\CashierAsaas\Tests\Fixtures\User;
 use Illuminate\Support\Facades\Event;
 
@@ -298,7 +299,7 @@ test('handles CHECKOUT_PAID with subscription but no customer found', function (
     Event::assertDispatched(CheckoutPaid::class);
 
     // No subscription should be created since customer wasn't found
-    expect(\Fevinta\CashierAsaas\Subscription::where('asaas_id', 'sub_no_customer_123')->exists())->toBeFalse();
+    expect(Subscription::where('asaas_id', 'sub_no_customer_123')->exists())->toBeFalse();
 });
 
 test('handles CHECKOUT_PAID with subscription and empty subscription ID', function () {

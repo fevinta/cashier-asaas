@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Carbon\Carbon;
 use Fevinta\CashierAsaas\Asaas;
 use Fevinta\CashierAsaas\Invoice;
 use Fevinta\CashierAsaas\Payment;
@@ -323,7 +324,7 @@ test('invoice casts values correctly', function () {
     expect($invoice->deductions)->toBe('10.25');
     expect($invoice->net_value)->toBeString();
     expect($invoice->net_value)->toBe('240.25');
-    expect($invoice->effective_date)->toBeInstanceOf(\Carbon\Carbon::class);
+    expect($invoice->effective_date)->toBeInstanceOf(Carbon::class);
     expect($invoice->taxes)->toBeArray();
     expect($invoice->taxes['iss'])->toBe(5);
     expect($invoice->metadata)->toBeArray();

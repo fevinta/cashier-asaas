@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
+use Carbon\Carbon;
 use Fevinta\CashierAsaas\Asaas;
+use Fevinta\CashierAsaas\Checkout;
 use Fevinta\CashierAsaas\Enums\BillingType;
 use Fevinta\CashierAsaas\Enums\SubscriptionCycle;
+use Fevinta\CashierAsaas\Subscription;
 use Fevinta\CashierAsaas\SubscriptionBuilder;
 use Fevinta\CashierAsaas\Tests\Concerns\MocksAsaasApi;
 use Fevinta\CashierAsaas\Tests\Fixtures\AsaasApiFixtures;
@@ -130,7 +133,7 @@ test('builder trial days', function () {
     $property->setAccessible(true);
 
     $trialEndsAt = $property->getValue($builder);
-    expect($trialEndsAt)->toBeInstanceOf(\Carbon\Carbon::class);
+    expect($trialEndsAt)->toBeInstanceOf(Carbon::class);
     expect((int) round(now()->diffInDays($trialEndsAt, false)))->toBe(14);
 });
 
@@ -311,7 +314,7 @@ test('builder creates subscription with mocked api', function () {
         ->withPix()
         ->create();
 
-    expect($subscription)->toBeInstanceOf(\Fevinta\CashierAsaas\Subscription::class);
+    expect($subscription)->toBeInstanceOf(Subscription::class);
     expect($subscription->user_id)->toBe($this->user->id);
     expect($subscription->type)->toBe('default');
     expect($subscription->plan)->toBe('premium');
@@ -467,7 +470,7 @@ test('builder creates subscription with all optional fields', function () {
         ->split('wallet_123', 10.00)
         ->create();
 
-    expect($subscription)->toBeInstanceOf(\Fevinta\CashierAsaas\Subscription::class);
+    expect($subscription)->toBeInstanceOf(Subscription::class);
 });
 
 test('builder throws exception when price not set and not in config', function () {
@@ -526,7 +529,7 @@ test('checkout creates checkout session for subscription', function () {
         ->monthly()
         ->checkout();
 
-    expect($checkout)->toBeInstanceOf(\Fevinta\CashierAsaas\Checkout::class);
+    expect($checkout)->toBeInstanceOf(Checkout::class);
     expect($checkout->id())->toBe('checkout_sub_123');
 
     Http::assertSent(function ($request) {

@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use Fevinta\CashierAsaas\Api\CustomerApi;
+use Fevinta\CashierAsaas\Api\InvoiceApi;
 use Fevinta\CashierAsaas\Api\PaymentApi;
 use Fevinta\CashierAsaas\Api\SubscriptionApi;
 use Fevinta\CashierAsaas\Api\WebhookApi;
 use Fevinta\CashierAsaas\Asaas;
+use Illuminate\Http\Client\PendingRequest;
 
 beforeEach(function () {
     // Reset static properties
@@ -78,11 +80,11 @@ test('webhook returns WebhookApi instance', function () {
 });
 
 test('invoice returns InvoiceApi instance', function () {
-    expect(Asaas::invoice())->toBeInstanceOf(\Fevinta\CashierAsaas\Api\InvoiceApi::class);
+    expect(Asaas::invoice())->toBeInstanceOf(InvoiceApi::class);
 });
 
 test('client returns configured HTTP client', function () {
     $client = Asaas::client();
 
-    expect($client)->toBeInstanceOf(\Illuminate\Http\Client\PendingRequest::class);
+    expect($client)->toBeInstanceOf(PendingRequest::class);
 });

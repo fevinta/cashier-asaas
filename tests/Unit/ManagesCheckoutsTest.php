@@ -6,6 +6,7 @@ use Fevinta\CashierAsaas\Asaas;
 use Fevinta\CashierAsaas\Checkout;
 use Fevinta\CashierAsaas\CheckoutBuilder;
 use Fevinta\CashierAsaas\Tests\Fixtures\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -313,6 +314,6 @@ test('checkout can redirect to checkout page', function () {
     $checkout = $this->user->checkout([['name' => 'Test', 'value' => 10.00]]);
     $redirect = $checkout->redirect();
 
-    expect($redirect)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
+    expect($redirect)->toBeInstanceOf(RedirectResponse::class);
     expect($redirect->getStatusCode())->toBe(303);
 });
